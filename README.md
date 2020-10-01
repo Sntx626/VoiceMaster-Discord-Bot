@@ -31,6 +31,7 @@ git clone https://github.com/Sntx626/VoiceMaster-Discord-Bot.git
 - Your bot prefix
 - Your bot token
 - The user id of the bot owner
+
 Then save file as `setup.json`.
 
 3. Build the dockerimage of the bot with:
