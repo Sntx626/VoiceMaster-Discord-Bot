@@ -20,18 +20,26 @@ Support Server for the bot: https://discord.gg/y9pgpbt
 
 # How to setup the bot:
 
-1.Download python using the following link:
+0. (prerequisite) Install the [Docker Engine](https://docs.docker.com/engine/install/)
 
-	https://www.python.org/downloads/release/python-373/
+1. Clone the bot repository with:
+```
+git clone https://github.com/Sntx626/VoiceMaster-Discord-Bot.git
+```
 
-2.Open command prompt and paste the following:
+2. Open `setup.json.example` in a text editor and add:
+- Your bot prefix
+- Your bot token
+- The user id of the bot owner
+Then save file as `setup.json`.
 
-	  pip3 install discord.py
-  
-	  pip3 install validators
-  
-3.Download the bot from github
+3. Build the dockerimage of the bot with:
+```
+docker build -t voicemaster .
+```
 
-4.Open **voicecreate.py** in a text editor and replace **'Enter Discord Token here'** with your bots token
+4. Start the bot with:
+```
+docker run -d --name VoiceMaster voicemaster
+```
 
-5.Run the bot
