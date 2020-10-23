@@ -7,7 +7,6 @@ import sys
 client = discord.Client()
 
 bot = commands.Bot(command_prefix=json.load(open('config.json'))['bot_prefix'])
-bot.remove_command("help")
 
 initial_extensions = ['cogs.voice']
 

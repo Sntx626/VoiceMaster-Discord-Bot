@@ -7,7 +7,6 @@ import discord
 import validators
 from discord.ext import commands
 
-
 class voice(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -27,10 +26,8 @@ class voice(commands.Cog):
                 if after.channel.id == voiceID:
                     c.execute("SELECT * FROM voiceChannel WHERE userID = ?", (member.id,))
                     cooldown=c.fetchone()
-                    if cooldown is None:
+                    if cooldown is None or not json.load(open('config.json'))['large_server']:
                         pass
-                    elif not json.load(open('config.json'))['large_server']:
-                    	await asyncio.sleep(3)
                     else:
                         await member.send("Creating channels too quickly you've been put on a 15 second cooldown!")
                         await asyncio.sleep(15)
@@ -70,26 +67,12 @@ class voice(commands.Cog):
                         return len(channel2.members) == 0
                     await self.bot.wait_for('voice_state_update', check=check)
                     await channel2.delete()
-                    await asyncio.sleep(3)
+                    #await asyncio.sleep(3)
                     c.execute('DELETE FROM voiceChannel WHERE userID=?', (id,))
             except:
                 pass
         conn.commit()
         conn.close()
-
-    @commands.command()
-    async def help(self, ctx):
-        embed = discord.Embed(title="Help", description="",color=0x7289da)
-        embed.set_author(name=f"{ctx.guild.me.display_name}",url="https://discordbots.org/bot/472911936951156740", icon_url=f"{ctx.guild.me.avatar_url}")
-        embed.add_field(name=f'**Commands**', value=f'**Lock your channel by using the following command:**\n\n`.voice lock`\n\n------------\n\n'
-                        f'**Unlock your channel by using the following command:**\n\n`.voice unlock`\n\n------------\n\n'
-                        f'**Change your channel name by using the following command:**\n\n`.voice name <name>`\n\n**Example:** `.voice name EU 5kd+`\n\n------------\n\n'
-                        f'**Change your channel limit by using the following command:**\n\n`.voice limit number`\n\n**Example:** `.voice limit 2`\n\n------------\n\n'
-                        f'**Give users permission to join by using the following command:**\n\n`.voice permit @person`\n\n**Example:** `.voice permit @Sam#9452`\n\n------------\n\n'
-                        f'**Claim ownership of channel once the owner has left:**\n\n`.voice claim`\n\n**Example:** `.voice claim`\n\n------------\n\n'
-                        f'**Remove permission and the user from your channel using the following command:**\n\n`.voice reject @person`\n\n**Example:** `.voice reject @Sam#9452`\n\n', inline='false')
-        embed.set_footer(text='Bot developed by Sam#9452')
-        await ctx.channel.send(embed=embed)
 
     @commands.group()
     async def voice(self, ctx):
@@ -133,8 +116,12 @@ class voice(commands.Cog):
             await ctx.channel.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
         conn.commit()
         conn.close()
+
+    @setup.error
+    async def info_error(self, ctx, error):
+        print(error)
     
-    @commands.command()
+    @voice.command()
     @commands.has_permissions(administrator=True)
     async def setCategoryId(self, ctx, newCategoryId):
         conn = sqlite3.connect('voice.db')
@@ -143,7 +130,7 @@ class voice(commands.Cog):
         conn.commit()
         conn.close()
     
-    @commands.command()
+    @voice.command()
     @commands.has_permissions(administrator=True)
     async def setChannelId(self, ctx, newChannelId):
         conn = sqlite3.connect('voice.db')
@@ -152,7 +139,7 @@ class voice(commands.Cog):
         conn.commit()
         conn.close()
 
-    @commands.command()
+    @voice.command()
     async def setlimit(self, ctx, num):
         conn = sqlite3.connect('voice.db')
         c = conn.cursor()
@@ -168,10 +155,6 @@ class voice(commands.Cog):
             await ctx.channel.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
         conn.commit()
         conn.close()
-
-    @setup.error
-    async def info_error(self, ctx, error):
-        print(error)
 
     @voice.command()
     async def lock(self, ctx):
@@ -324,7 +307,6 @@ class voice(commands.Cog):
                     c.execute("UPDATE voiceChannel SET userID = ? WHERE voiceID = ?", (id, channel.id))
             conn.commit()
             conn.close()
-
 
 def setup(bot):
     bot.add_cog(voice(bot))
