@@ -90,10 +90,11 @@ class voice(commands.Cog):
             await ctx.channel.send("**You have 60 seconds to answer each question!**\n**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
             await ctx.channel.send("**Do you want to use a preexisting category and channel?**(yes/no):")
             try:
-                answer = await self.bot.wait_for('message', check=check, timeout = 60.0).content
+                answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
             except asyncio.TimeoutError:
                 await ctx.channel.send('Took too long to answer!')
             else:
+                await ctx.channel.send(f'Answer:\n`{answer}`')
                 if answer == "yes":
                     createNew = False
                 else:
