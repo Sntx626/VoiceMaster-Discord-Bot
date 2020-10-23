@@ -90,7 +90,7 @@ class voice(commands.Cog):
             await ctx.channel.send("**You have 60 seconds to answer each question!**\n**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
             await ctx.channel.send("**Do you want to use a preexisting category and channel?**(yes/no):")
             try:
-                answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
+                answer = str(await self.bot.wait_for('message', check=check, timeout = 60.0))
             except asyncio.TimeoutError:
                 await ctx.channel.send('Took too long to answer!')
             else:
@@ -127,13 +127,13 @@ class voice(commands.Cog):
             else:
                 await ctx.channel.send(f"**Enter the id of the category you wish to use:**")
                 try:
-                    categoryId = await self.bot.wait_for('message', check=check, timeout = 60.0).content
+                    categoryId = str(await self.bot.wait_for('message', check=check, timeout = 60.0))
                 except asyncio.TimeoutError:
                     await ctx.channel.send('Took too long to answer!')
                 else:
                     await ctx.channel.send(f"**Enter the id of the channel you wish to use:**")
                     try:
-                        channelId = await self.bot.wait_for('message', check=check, timeout = 60.0).content
+                        channelId = str(await self.bot.wait_for('message', check=check, timeout = 60.0))
                     except asyncio.TimeoutError:
                         await ctx.channel.send('Took too long to answer!')
                     else:
