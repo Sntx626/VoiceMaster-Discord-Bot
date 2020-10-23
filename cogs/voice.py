@@ -27,7 +27,7 @@ class voice(commands.Cog):
                 if after.channel.id == voiceID:
                     c.execute("SELECT * FROM voiceChannel WHERE userID = ?", (member.id,))
                     cooldown=c.fetchone()
-                    if cooldown is None:
+                    if cooldown is None or not json.load(open('config.json'))['large_server']:
                         pass
                     else:
                         await member.send("Creating channels too quickly you've been put on a 15 second cooldown!")
@@ -134,7 +134,7 @@ class voice(commands.Cog):
     
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def setCatergoryId(self, ctx, newCategoryId):
+    async def setCategoryId(self, ctx, newCategoryId):
         conn = sqlite3.connect('voice.db')
         c = conn.cursor()
         c.execute ("UPDATE guild SET voiceCategoryID = ? WHERE guildID = ?",(newCategoryId, ctx.guild.id))
