@@ -143,6 +143,7 @@ class voice(commands.Cog):
                             c.execute ("INSERT INTO guild VALUES (?, ?, ?, ?)",(guildID,id,int(channelId.content),int(categoryId.content)))
                         else:
                             c.execute ("UPDATE guild SET guildID = ?, ownerID = ?, voiceChannelID = ?, voiceCategoryID = ? WHERE guildID = ?",(guildID,id,int(channelId.content),int(categoryId.content), guildID))
+                        await ctx.channel.send("**You are all setup and ready to go!**")
         else:
             await ctx.channel.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
         conn.commit()
