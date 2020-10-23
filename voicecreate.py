@@ -1,12 +1,6 @@
 import discord
-import math
-import asyncio
-import aiohttp
-import json
 from discord.ext import commands
-from random import randint
 import traceback
-import sqlite3
 import sys
 
 client = discord.Client()
