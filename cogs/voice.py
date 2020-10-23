@@ -137,6 +137,24 @@ class voice(commands.Cog):
             await ctx.channel.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
         conn.commit()
         conn.close()
+    
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def setCatergoryId(self, ctx, newCategoryId):
+        conn = sqlite3.connect('voice.db')
+        c = conn.cursor()
+        c.execute ("UPDATE guild SET voiceCategoryID = ? WHERE guildID = ?",(newCategoryId, ctx.guild.id))
+        conn.commit()
+        conn.close()
+    
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def setChannelId(self, ctx, newChannelId):
+        conn = sqlite3.connect('voice.db')
+        c = conn.cursor()
+        c.execute ("UPDATE guild SET voiceChannelID = ? WHERE guildID = ?",(newChannelId, ctx.guild.id))
+        conn.commit()
+        conn.close()
 
     @commands.command()
     async def setlimit(self, ctx, num):
