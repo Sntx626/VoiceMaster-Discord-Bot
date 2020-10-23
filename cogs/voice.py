@@ -90,12 +90,12 @@ class voice(commands.Cog):
             await ctx.channel.send("**You have 60 seconds to answer each question!**\n**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
             await ctx.channel.send("**Do you want to use a preexisting category and channel?**(yes/no):")
             try:
-                answer = str(await self.bot.wait_for('message', check=check, timeout = 60.0))
+                answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
             except asyncio.TimeoutError:
                 await ctx.channel.send('Took too long to answer!')
             else:
-                await ctx.channel.send(f'Answer:\n`{answer}`')
-                if answer == "yes":
+                await ctx.channel.send(f'Answer:\n`{answer.content}`')
+                if answer.content == "yes":
                     createNew = False
                 else:
                     createNew = True
@@ -127,22 +127,22 @@ class voice(commands.Cog):
             else:
                 await ctx.channel.send(f"**Enter the id of the category you wish to use:**")
                 try:
-                    categoryId = str(await self.bot.wait_for('message', check=check, timeout = 60.0))
+                    categoryId = await self.bot.wait_for('message', check=check, timeout = 60.0)
                 except asyncio.TimeoutError:
                     await ctx.channel.send('Took too long to answer!')
                 else:
                     await ctx.channel.send(f"**Enter the id of the channel you wish to use:**")
                     try:
-                        channelId = str(await self.bot.wait_for('message', check=check, timeout = 60.0))
+                        channelId = await self.bot.wait_for('message', check=check, timeout = 60.0)
                     except asyncio.TimeoutError:
                         await ctx.channel.send('Took too long to answer!')
                     else:
                         c.execute("SELECT * FROM guild WHERE guildID = ? AND ownerID=?", (guildID, id))
                         voice=c.fetchone()
                         if voice is None:
-                            c.execute ("INSERT INTO guild VALUES (?, ?, ?, ?)",(guildID,id,int(channelId),int(categoryId)))
+                            c.execute ("INSERT INTO guild VALUES (?, ?, ?, ?)",(guildID,id,int(channelId.content),int(categoryId.content)))
                         else:
-                            c.execute ("UPDATE guild SET guildID = ?, ownerID = ?, voiceChannelID = ?, voiceCategoryID = ? WHERE guildID = ?",(guildID,id,int(channelId),int(categoryId), guildID))
+                            c.execute ("UPDATE guild SET guildID = ?, ownerID = ?, voiceChannelID = ?, voiceCategoryID = ? WHERE guildID = ?",(guildID,id,int(channelId.content),int(categoryId.content), guildID))
         else:
             await ctx.channel.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
         conn.commit()
