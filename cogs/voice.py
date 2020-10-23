@@ -27,8 +27,10 @@ class voice(commands.Cog):
                 if after.channel.id == voiceID:
                     c.execute("SELECT * FROM voiceChannel WHERE userID = ?", (member.id,))
                     cooldown=c.fetchone()
-                    if cooldown is None or not json.load(open('config.json'))['large_server']:
+                    if cooldown is None:
                         pass
+                    elif not json.load(open('config.json'))['large_server']:
+                    	await asyncio.sleep(3)
                     else:
                         await member.send("Creating channels too quickly you've been put on a 15 second cooldown!")
                         await asyncio.sleep(15)
