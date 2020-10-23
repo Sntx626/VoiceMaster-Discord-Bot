@@ -87,31 +87,61 @@ class voice(commands.Cog):
         if ctx.author.id == json.load(open('config.json'))['owner_id']:
             def check(m):
                 return m.author.id == ctx.author.id
-            await ctx.channel.send("**You have 60 seconds to answer each question!**")
-            await ctx.channel.send(f"**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
+            await ctx.channel.send("**You have 60 seconds to answer each question!**\n**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
+            await ctx.channel.send("**Do you want to use a preexisting category and channel?**(yes/no):")
             try:
-                category = await self.bot.wait_for('message', check=check, timeout = 60.0)
+                answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
             except asyncio.TimeoutError:
                 await ctx.channel.send('Took too long to answer!')
             else:
-                new_cat = await ctx.guild.create_category_channel(category.content)
-                await ctx.channel.send('**Enter the name of the voice channel: (e.g Join To Create)**')
+                if answer == "yes":
+                    createNew = False
+                else:
+                    createNew = True
+            if createNew == True:
+                await ctx.channel.send(f"**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
                 try:
-                    channel = await self.bot.wait_for('message', check=check, timeout = 60.0)
+                    category = await self.bot.wait_for('message', check=check, timeout = 60.0)
                 except asyncio.TimeoutError:
                     await ctx.channel.send('Took too long to answer!')
                 else:
+                    new_cat = await ctx.guild.create_category_channel(category.content)
+                    await ctx.channel.send('**Enter the name of the voice channel: (e.g Join To Create)**')
                     try:
-                        channel = await ctx.guild.create_voice_channel(channel.content, category=new_cat)
+                        channel = await self.bot.wait_for('message', check=check, timeout = 60.0)
+                    except asyncio.TimeoutError:
+                        await ctx.channel.send('Took too long to answer!')
+                    else:
+                        try:
+                            channel = await ctx.guild.create_voice_channel(channel.content, category=new_cat)
+                            c.execute("SELECT * FROM guild WHERE guildID = ? AND ownerID=?", (guildID, id))
+                            voice=c.fetchone()
+                            if voice is None:
+                                c.execute ("INSERT INTO guild VALUES (?, ?, ?, ?)",(guildID,id,channel.id,new_cat.id))
+                            else:
+                                c.execute ("UPDATE guild SET guildID = ?, ownerID = ?, voiceChannelID = ?, voiceCategoryID = ? WHERE guildID = ?",(guildID,id,channel.id,new_cat.id, guildID))
+                            await ctx.channel.send("**You are all setup and ready to go!**")
+                        except:
+                            await ctx.channel.send("You didn't enter the names properly.\nUse `.voice setup` again!")
+            else:
+                await ctx.channel.send(f"**Enter the id of the category you wish to use:**")
+                try:
+                    categoryId = await self.bot.wait_for('message', check=check, timeout = 60.0)
+                except asyncio.TimeoutError:
+                    await ctx.channel.send('Took too long to answer!')
+                else:
+                    await ctx.channel.send(f"**Enter the id of the channel you wish to use:**")
+                    try:
+                        channelId = await self.bot.wait_for('message', check=check, timeout = 60.0)
+                    except asyncio.TimeoutError:
+                        await ctx.channel.send('Took too long to answer!')
+                    else:
                         c.execute("SELECT * FROM guild WHERE guildID = ? AND ownerID=?", (guildID, id))
                         voice=c.fetchone()
                         if voice is None:
-                            c.execute ("INSERT INTO guild VALUES (?, ?, ?, ?)",(guildID,id,channel.id,new_cat.id))
+                            c.execute ("INSERT INTO guild VALUES (?, ?, ?, ?)",(guildID,id,int(channelId),int(categoryId)))
                         else:
-                            c.execute ("UPDATE guild SET guildID = ?, ownerID = ?, voiceChannelID = ?, voiceCategoryID = ? WHERE guildID = ?",(guildID,id,channel.id,new_cat.id, guildID))
-                        await ctx.channel.send("**You are all setup and ready to go!**")
-                    except:
-                        await ctx.channel.send("You didn't enter the names properly.\nUse `.voice setup` again!")
+                            c.execute ("UPDATE guild SET guildID = ?, ownerID = ?, voiceChannelID = ?, voiceCategoryID = ? WHERE guildID = ?",(guildID,id,int(channelId),int(categoryId), guildID))
         else:
             await ctx.channel.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
         conn.commit()
@@ -124,20 +154,28 @@ class voice(commands.Cog):
     @voice.command()
     @commands.has_permissions(administrator=True)
     async def setCategoryId(self, ctx, newCategoryId):
-        conn = sqlite3.connect('voice.db')
-        c = conn.cursor()
-        c.execute ("UPDATE guild SET voiceCategoryID = ? WHERE guildID = ?",(newCategoryId, ctx.guild.id))
-        conn.commit()
-        conn.close()
+        try:
+            conn = sqlite3.connect('voice.db')
+            c = conn.cursor()
+            c.execute ("UPDATE guild SET voiceCategoryID = ? WHERE guildID = ?",(int(newCategoryId), ctx.guild.id))
+            conn.commit()
+            conn.close()
+            await ctx.send("Your Category ID has been updated!")
+        except Exception as e:
+            await ctx.send(f"Couldn't update Category ID\n`{e}`")
     
     @voice.command()
     @commands.has_permissions(administrator=True)
     async def setChannelId(self, ctx, newChannelId):
-        conn = sqlite3.connect('voice.db')
-        c = conn.cursor()
-        c.execute ("UPDATE guild SET voiceChannelID = ? WHERE guildID = ?",(newChannelId, ctx.guild.id))
-        conn.commit()
-        conn.close()
+        try:
+            conn = sqlite3.connect('voice.db')
+            c = conn.cursor()
+            c.execute ("UPDATE guild SET voiceChannelID = ? WHERE guildID = ?",(int(newChannelId), ctx.guild.id))
+            conn.commit()
+            conn.close()
+            await ctx.send("Your Category ID has been updated!")
+        except Exception as e:
+            await ctx.send(f"Couldn't update Category ID\n`{e}`")
 
     @voice.command()
     async def setlimit(self, ctx, num):
