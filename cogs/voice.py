@@ -94,7 +94,6 @@ class voice(commands.Cog):
             except asyncio.TimeoutError:
                 await ctx.channel.send('Took too long to answer!')
             else:
-                await ctx.channel.send(f'Answer:\n`{answer.content}`')
                 if answer.content == "yes":
                     createNew = False
                 else:
