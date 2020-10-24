@@ -161,9 +161,9 @@ class voice(commands.Cog):
             c.execute ("UPDATE guild SET voiceCategoryID = ? WHERE guildID = ?",(int(newCategoryId), ctx.guild.id))
             conn.commit()
             conn.close()
-            await ctx.send("Your Category ID has been updated!")
+            await ctx.send("Your category ID has been updated!")
         except Exception as e:
-            await ctx.send(f"Couldn't update Category ID\n`{e}`")
+            await ctx.send(f"Couldn't update category ID\n`{e}`")
     
     @voice.command()
     @commands.has_permissions(administrator=True)
@@ -174,9 +174,9 @@ class voice(commands.Cog):
             c.execute ("UPDATE guild SET voiceChannelID = ? WHERE guildID = ?",(int(newChannelId), ctx.guild.id))
             conn.commit()
             conn.close()
-            await ctx.send("Your Category ID has been updated!")
+            await ctx.send("Your channel ID has been updated!")
         except Exception as e:
-            await ctx.send(f"Couldn't update Category ID\n`{e}`")
+            await ctx.send(f"Couldn't update channel ID\n`{e}`")
 
     @voice.command()
     async def setlimit(self, ctx, num):
