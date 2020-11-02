@@ -87,7 +87,7 @@ class voice(commands.Cog):
         if ctx.author.id == json.load(open('config.json'))['owner_id']:
             def check(m):
                 return m.author.id == ctx.author.id
-            await ctx.channel.send("**You have 60 seconds to answer each question!**\n**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
+            await ctx.channel.send("**You have 60 seconds to answer each question!**")
             await ctx.channel.send("**Do you want to use a preexisting category and channel?**(yes/no):")
             try:
                 answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
