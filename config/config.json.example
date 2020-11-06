@@ -1,0 +1,7 @@
+{
+	"VoiceMaster-Discord-Bot": {
+		"owner_id": 0,
+        "db-pass": "",
+        "large_server": false
+	}
+}
