@@ -14,7 +14,7 @@ class Voice(commands.Cog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         guildID = member.guild.id
         c.execute("SELECT voiceChannelID FROM voiceguild WHERE guildID = %s", (guildID,))
@@ -82,7 +82,7 @@ class Voice(commands.Cog):
     @voice.command()
     async def setup(self, ctx):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         guildID = ctx.guild.id
         id = ctx.author.id
@@ -155,7 +155,7 @@ class Voice(commands.Cog):
     async def setCategoryId(self, ctx, newCategoryId):
         try:
             conn = None
-            conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+            conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
             c = conn.cursor()
             c.execute ("UPDATE voiceguild SET voiceCategoryID = %s WHERE guildID = %s",(int(newCategoryId), ctx.guild.id))
             conn.commit()
@@ -169,7 +169,7 @@ class Voice(commands.Cog):
     async def setChannelId(self, ctx, newChannelId):
         try:
             conn = None
-            conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+            conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
             c = conn.cursor()
             c.execute ("UPDATE voiceguild SET voiceChannelID = %s WHERE guildID = %s",(int(newChannelId), ctx.guild.id))
             conn.commit()
@@ -181,7 +181,7 @@ class Voice(commands.Cog):
     @voice.command()
     async def setlimit(self, ctx, num):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         if ctx.author.id == config['owner_id']:
             c.execute("SELECT * FROM voiceguildsettings WHERE guildID = %s", (ctx.guild.id,))
@@ -199,7 +199,7 @@ class Voice(commands.Cog):
     @voice.command()
     async def lock(self, ctx):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         id = ctx.author.id
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
@@ -218,7 +218,7 @@ class Voice(commands.Cog):
     @voice.command()
     async def unlock(self, ctx):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         id = ctx.author.id
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
@@ -237,7 +237,7 @@ class Voice(commands.Cog):
     @voice.command(aliases=["allow"])
     async def permit(self, ctx, member : discord.Member):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         id = ctx.author.id
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
@@ -255,7 +255,7 @@ class Voice(commands.Cog):
     @voice.command(aliases=["deny"])
     async def reject(self, ctx, member : discord.Member):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         id = ctx.author.id
         guildID = ctx.guild.id
@@ -282,7 +282,7 @@ class Voice(commands.Cog):
     @voice.command()
     async def limit(self, ctx, limit):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         id = ctx.author.id
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
@@ -307,7 +307,7 @@ class Voice(commands.Cog):
     @voice.command()
     async def name(self, ctx,*, name):
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         id = ctx.author.id
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
@@ -332,7 +332,7 @@ class Voice(commands.Cog):
     async def claim(self, ctx):
         x = False
         conn = None
-        conn = psycopg2.connect(host="192.168.178.44", user="postgres", password=config["db-pass"])
+        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         channel = ctx.author.voice.channel
         if channel == None:
