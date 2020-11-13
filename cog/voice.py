@@ -90,26 +90,26 @@ class Voice(commands.Cog):
         if ctx.author.id == config['owner_id']:
             def check(m):
                 return m.author.id == ctx.author.id
-            await self.client.send("**You have 60 seconds to answer each question!**")
-            await self.client.send("**Do you want to use a preexisting category and channel%s**(yes/no):")
+            await self.client.send(ctx, "**You have 60 seconds to answer each question!**")
+            await self.client.send(ctx, "**Do you want to use a preexisting category and channel%s**(yes/no):")
             try:
                 answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
             except asyncio.TimeoutError:
-                await self.client.send('Took too long to answer!')
+                await self.client.send(ctx, 'Took too long to answer!')
             else:
                 if answer.content == "no":
-                    await self.client.send(f"**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
+                    await self.client.send(ctx, f"**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
                     try:
                         category = await self.bot.wait_for('message', check=check, timeout = 60.0)
                     except asyncio.TimeoutError:
-                        await self.client.send('Took too long to answer!')
+                        await self.client.send(ctx, 'Took too long to answer!')
                     else:
                         new_cat = await ctx.guild.create_category_channel(category.content)
-                    await self.client.send('**Enter the name of the voice channel: (e.g Join To Create)**')
+                    await self.client.send(ctx, '**Enter the name of the voice channel: (e.g Join To Create)**')
                     try:
                         channel = await self.bot.wait_for('message', check=check, timeout = 60.0)
                     except asyncio.TimeoutError:
-                        await self.client.send('Took too long to answer!')
+                        await self.client.send(ctx, 'Took too long to answer!')
                     else:
                         try:
                             channel = await ctx.guild.create_voice_channel(channel.content, category=new_cat)
@@ -119,21 +119,21 @@ class Voice(commands.Cog):
                                 c.execute ("INSERT INTO voiceguild VALUES (%s, %s, %s, %s)",(guildID,id,channel.id,new_cat.id))
                             else:
                                 c.execute ("UPDATE voiceguild SET guildID = %s, ownerID = %s, voiceChannelID = %s, voiceCategoryID = %s WHERE guildID = %s",(guildID,id,channel.id,new_cat.id, guildID))
-                            await self.client.send("**You are all setup and ready to go!**")
+                            await self.client.send(ctx, "**You are all setup and ready to go!**")
                         except:
-                            await self.client.send("You didn't enter the names properly.\nUse `.voice setup` again!")
+                            await self.client.send(ctx, "You didn't enter the names properly.\nUse `.voice setup` again!")
                 else:
-                    await self.client.send(f"**Enter the id of the category you wish to use:**")
+                    await self.client.send(ctx, f"**Enter the id of the category you wish to use:**")
                     try:
                         categoryId = await self.bot.wait_for('message', check=check, timeout = 60.0)
                     except asyncio.TimeoutError:
-                        await self.client.send('Took too long to answer!')
+                        await self.client.send(ctx, 'Took too long to answer!')
                     else:
-                        await self.client.send(f"**Enter the id of the channel you wish to use:**")
+                        await self.client.send(ctx, f"**Enter the id of the channel you wish to use:**")
                         try:
                             channelId = await self.bot.wait_for('message', check=check, timeout = 60.0)
                         except asyncio.TimeoutError:
-                            await self.client.send('Took too long to answer!')
+                            await self.client.send(ctx, 'Took too long to answer!')
                         else:
                             c.execute("SELECT * FROM voiceguild WHERE guildID = %s AND ownerID=%s", (guildID, id))
                             voice=c.fetchone()
@@ -141,9 +141,9 @@ class Voice(commands.Cog):
                                 c.execute ("INSERT INTO voiceguild VALUES (%s, %s, %s, %s)",(guildID,id,int(channelId.content),int(categoryId.content)))
                             else:
                                 c.execute ("UPDATE voiceguild SET guildID = %s, ownerID = %s, voiceChannelID = %s, voiceCategoryID = %s WHERE guildID = %s",(guildID,id,int(channelId.content),int(categoryId.content), guildID))
-                            await self.client.send("**You are all setup and ready to go!**")
+                            await self.client.send(ctx, "**You are all setup and ready to go!**")
         else:
-            await self.client.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
+            await self.client.send(ctx, f"{ctx.author.mention} only the owner of the server can setup the bot!")
         conn.commit()
         conn.close()
 
@@ -162,9 +162,9 @@ class Voice(commands.Cog):
             c.execute ("UPDATE voiceguild SET voiceCategoryID = %s WHERE guildID = %s",(int(newCategoryId), ctx.guild.id))
             conn.commit()
             conn.close()
-            await self.client.send("Your category ID has been updated!")
+            await self.client.send(ctx, "Your category ID has been updated!")
         except Exception as e:
-            await self.client.send(f"Couldn't update category ID\n`{e}`")
+            await self.client.send(ctx, f"Couldn't update category ID\n`{e}`")
     
     @voice.command()
     @commands.has_permissions(administrator=True)
@@ -177,9 +177,9 @@ class Voice(commands.Cog):
             c.execute ("UPDATE voiceguild SET voiceChannelID = %s WHERE guildID = %s",(int(newChannelId), ctx.guild.id))
             conn.commit()
             conn.close()
-            await self.client.send("Your channel ID has been updated!")
+            await self.client.send(ctx, "Your channel ID has been updated!")
         except Exception as e:
-            await self.client.send(f"Couldn't update channel ID\n`{e}`")
+            await self.client.send(ctx, f"Couldn't update channel ID\n`{e}`")
 
     @voice.command()
     async def setlimit(self, ctx, num):
@@ -194,9 +194,9 @@ class Voice(commands.Cog):
                 c.execute("INSERT INTO voiceguildsettings VALUES (%s, %s, %s)", (ctx.guild.id,f"{ctx.author.name}'s channel",num))
             else:
                 c.execute("UPDATE voiceguildsettings SET channelLimit = %s WHERE guildID = %s", (num, ctx.guild.id))
-            await self.client.send("You have changed the default channel limit for your server!")
+            await self.client.send(ctx, "You have changed the default channel limit for your server!")
         else:
-            await self.client.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
+            await self.client.send(ctx, f"{ctx.author.mention} only the owner of the server can setup the bot!")
         conn.commit()
         conn.close()
 
@@ -210,13 +210,13 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.client.send(f"{ctx.author.mention} You don't own a channel.")
+            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
         else:
             channelID = voice[0]
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
             channel = self.bot.get_channel(channelID)
             await channel.set_permissions(role, connect=False,read_messages=True)
-            await self.client.send(f'{ctx.author.mention} Voice chat locked! 🔒')
+            await self.client.send(ctx, f'{ctx.author.mention} Voice chat locked! 🔒')
         conn.commit()
         conn.close()
 
@@ -230,13 +230,13 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.client.send(f"{ctx.author.mention} You don't own a channel.")
+            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
         else:
             channelID = voice[0]
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
             channel = self.bot.get_channel(channelID)
             await channel.set_permissions(role, connect=True,read_messages=True)
-            await self.client.send(f'{ctx.author.mention} Voice chat unlocked! 🔓')
+            await self.client.send(ctx, f'{ctx.author.mention} Voice chat unlocked! 🔓')
         conn.commit()
         conn.close()
 
@@ -250,12 +250,12 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.client.send(f"{ctx.author.mention} You don't own a channel.")
+            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.set_permissions(member, connect=True)
-            await self.client.send(f'{ctx.author.mention} You have permited {member.name} to have access to the channel. ✅')
+            await self.client.send(ctx, f'{ctx.author.mention} You have permited {member.name} to have access to the channel. ✅')
         conn.commit()
         conn.close()
 
@@ -270,7 +270,7 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.client.send(f"{ctx.author.mention} You don't own a channel.")
+            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
@@ -281,7 +281,7 @@ class Voice(commands.Cog):
                     channel2 = self.bot.get_channel(voice[0])
                     await member.move_to(channel2)
             await channel.set_permissions(member, connect=False,read_messages=True)
-            await self.client.send(f'{ctx.author.mention} You have rejected {member.name} from accessing the channel. ❌')
+            await self.client.send(ctx, f'{ctx.author.mention} You have rejected {member.name} from accessing the channel. ❌')
         conn.commit()
         conn.close()
 
@@ -297,12 +297,12 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.client.send(f"{ctx.author.mention} You don't own a channel.")
+            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(user_limit = limit)
-            await self.client.send(f'{ctx.author.mention} You have set the channel limit to be '+ '{}!'.format(limit))
+            await self.client.send(ctx, f'{ctx.author.mention} You have set the channel limit to be '+ '{}!'.format(limit))
             c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
             voice=c.fetchone()
             if voice is None:
@@ -323,12 +323,12 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.client.send(f"{ctx.author.mention} You don't own a channel.")
+            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(name = name)
-            await self.client.send(f'{ctx.author.mention} You have changed the channel name to '+ '{}!'.format(name))
+            await self.client.send(ctx, f'{ctx.author.mention} You have changed the channel name to '+ '{}!'.format(name))
             c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
             voice=c.fetchone()
             if voice is None:
@@ -347,21 +347,21 @@ class Voice(commands.Cog):
         c = conn.cursor()
         channel = ctx.author.voice.channel
         if channel == None:
-            await self.client.send(f"{ctx.author.mention} you're not in a voice channel.")
+            await self.client.send(ctx, f"{ctx.author.mention} you're not in a voice channel.")
         else:
             id = ctx.author.id
             c.execute("SELECT userID FROM voicechannel WHERE voiceID = %s", (channel.id,))
             voice=c.fetchone()
             if voice is None:
-                await self.client.send(f"{ctx.author.mention} You can't own that channel!")
+                await self.client.send(ctx, f"{ctx.author.mention} You can't own that channel!")
             else:
                 for data in channel.members:
                     if data.id == voice[0]:
                         owner = ctx.guild.get_member(voice [0])
-                        await self.client.send(f"{ctx.author.mention} This channel is already owned by {owner.mention}!")
+                        await self.client.send(ctx, f"{ctx.author.mention} This channel is already owned by {owner.mention}!")
                         x = True
                 if x == False:
-                    await self.client.send(f"{ctx.author.mention} You are now the owner of the channel!")
+                    await self.client.send(ctx, f"{ctx.author.mention} You are now the owner of the channel!")
                     c.execute("UPDATE voicechannel SET userID = %s WHERE voiceID = %s", (id, channel.id))
             conn.commit()
             conn.close()
