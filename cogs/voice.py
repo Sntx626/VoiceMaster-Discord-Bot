@@ -278,8 +278,6 @@ class Voice(commands.Cog):
         conn.commit()
         conn.close()
 
-
-
     @voice.command()
     async def limit(self, ctx, limit=0):
         conn = None
@@ -303,7 +301,6 @@ class Voice(commands.Cog):
                 c.execute("UPDATE voiceusersettings SET channelLimit = %s WHERE userID = %s", (limit, id))
         conn.commit()
         conn.close()
-
 
     @voice.command()
     async def name(self, ctx,*, name = ""):
