@@ -1,6 +1,9 @@
 {
 	"bot_prefix": "",
 	"bot_token": "",
-	"owner_id": 0
+	"owner_id": 0,
+	"owner_id": 0,
+	"db-addr": "",
+    "db-pass": "",
+    "large_server": false
 }
-
