@@ -151,7 +151,7 @@ class Voice(commands.Cog):
     async def info_error(self, ctx, error):
         print(error)
     
-    @voice.command()
+    @commands.command()
     @commands.has_permissions(administrator=True)
     async def setCategoryId(self, ctx, newCategoryId):
         await self.client.deleteInvoking(ctx.message)
@@ -166,7 +166,7 @@ class Voice(commands.Cog):
         except Exception as e:
             await self.client.send(ctx, f"Couldn't update category ID\n`{e}`")
     
-    @voice.command()
+    @commands.command()
     @commands.has_permissions(administrator=True)
     async def setChannelId(self, ctx, newChannelId):
         await self.client.deleteInvoking(ctx.message)
