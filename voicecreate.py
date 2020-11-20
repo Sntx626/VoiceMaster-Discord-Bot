@@ -24,7 +24,7 @@ def getBotMessageChannel(guildID):
         conn.commit()
         c.close()
     except Exception as e:
-        print("Could not receive channel id from from db.\n{e}")
+        print("Die Channel ID der konnte nicht aus der Datenbank empfangen werden.\n{e}")
     return bot.get_channel(rtrn)
 
 async def deleteInvoking(message):
@@ -33,6 +33,16 @@ async def deleteInvoking(message):
             await message.delete(delay=config["deleteInvokingMessageTimeout"])
         except Exception as e:
             print(f"Couldn't delete invoking message:\n`{e}`")
+    channel = getBotMessageChannel(message.guild.id)
+    if channel is None:
+        channel = message.channel
+    else:
+        embed = discord.Embed(
+            title = f'{message.author.mention} hat in {message.channel.name} ausgeführt:',
+            description = f"{message.content}"
+        )
+        await channel.send(embed=embed)
+
 setattr(bot, 'deleteInvoking', deleteInvoking)
 
 async def send(ctx, embed):
