@@ -8,6 +8,24 @@ try:
     c = conn.cursor()
 
     # VoiceMaster
+    try:
+        c.execute('drop table voiceGuild')
+    except:
+        pass
+    try:
+        c.execute('drop table voicechannel')
+    except:
+        pass
+    try:
+        c.execute('drop table voiceusersettings')
+    except:
+        pass
+    try:
+        c.execute('drop table voiceguildsettings')
+    except:
+        pass
+
+    # VoiceMaster
     c.execute('create table voiceGuild(guildID bigint, ownerID bigint, voiceChannelID bigint, voiceCategoryID bigint)')
     c.execute('create table voicechannel(userID bigint, voiceID bigint)')
     c.execute('create table voiceusersettings(userID bigint, channelName text, channelLimit int)')
