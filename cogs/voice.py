@@ -350,7 +350,7 @@ class Voice(commands.Cog):
                         await ctx.send(f"{ctx.author.mention} Dieser Channel ist bereits im Besitz von {owner.mention}!")
                         x = True
                 if x == False:
-                    await ctx.send(f"{ctx.author.mention} Du besitzt diesen Channel nicht!")
+                    await ctx.send(f"{ctx.author.mention} Du bist nun der Besitzer dieses Channels!")
                     c.execute("UPDATE voicechannel SET userID = %s WHERE voiceID = %s", (id, channel.id))
                     
                     c.execute("SELECT channelName, channelLimit FROM voiceusersettings WHERE userID = %s", (ctx.author.id,))
