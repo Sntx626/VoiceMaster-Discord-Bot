@@ -305,8 +305,8 @@ class Voice(commands.Cog):
 
 
     @voice.command()
-    async def name(self, ctx,*, name : str):
-        if name is None:
+    async def name(self, ctx,*, name = ""):
+        if name is "":
             name = f"{ctx.author.name}'s channel'"
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
