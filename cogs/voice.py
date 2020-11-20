@@ -81,7 +81,7 @@ class Voice(commands.Cog):
 
     @voice.command()
     async def setup(self, ctx):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -143,7 +143,7 @@ class Voice(commands.Cog):
                                 c.execute ("UPDATE voiceguild SET guildID = %s, ownerID = %s, voiceChannelID = %s, voiceCategoryID = %s WHERE guildID = %s",(guildID,id,int(channelId.content),int(categoryId.content), guildID))
                             await self.bot.send(ctx, "**Du bist nun eingerichtet und bereit!**")
         else:
-            await self.bot.send(ctx, f"{ctx.author.mention} nur der Besitzer des Servers kann diese Einstellung vornehmen!")
+            await self.bot.send(ctx, f"Nur der Besitzer des Servers kann diese Einstellung vornehmen!")
         conn.commit()
         conn.close()
 
@@ -154,7 +154,7 @@ class Voice(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def setCategoryId(self, ctx, newCategoryId = 0):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         try:
             conn = None
             conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -164,12 +164,12 @@ class Voice(commands.Cog):
             conn.close()
             await self.bot.send(ctx, "Die ID der Kategorie wurde geupdated!")
         except Exception as e:
-            await self.bot.send(ctx, f"Couldn't update category ID\n`{e}`")
+            await self.bot.send(ctx, f"Die ID der Kategorie konnte nicht geupdated werden!\n`{e}`")
     
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def setChannelId(self, ctx, newChannelId = 0):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         try:
             conn = None
             conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -179,12 +179,12 @@ class Voice(commands.Cog):
             conn.close()
             await self.bot.send(ctx, "Die ID des Channels wurde geupdated!")
         except Exception as e:
-            await self.bot.send(ctx, f"Couldn't update channel ID\n`{e}`")
+            await self.bot.send(ctx, f"Die ID des Channels konnte nicht geupdated werden!\n`{e}`")
 
     @commands.command()
     @commands.is_owner()
     async def setlimit(self, ctx, num = 0):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -197,13 +197,13 @@ class Voice(commands.Cog):
                 c.execute("UPDATE voiceguildsettings SET channelLimit = %s WHERE guildID = %s", (num, ctx.guild.id))
             await self.bot.send(ctx, f"Du hast das Standardlimit für Sprachkanäle des Servers verändert!\nNeu: {num}")
         else:
-            await self.bot.send(ctx, f"{ctx.author.mention} Nur der besitzer des Bots kann diese Einstellung ändern!")
+            await self.bot.send(ctx, f"Nur der besitzer des Bots kann diese Einstellung ändern!")
         conn.commit()
         conn.close()
 
     @voice.command(aliases=["Lock", "sperren", "beschränken", "abschließen"])
     async def lock(self, ctx):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -211,19 +211,19 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.bot.send(ctx, f"{ctx.author.mention} Du besitzt keinen Channel.")
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
             channel = self.bot.get_channel(channelID)
             await channel.set_permissions(role, connect=False,read_messages=True)
-            await self.bot.send(ctx, f'{ctx.author.mention} Gesperrt! 🔒')
+            await self.bot.send(ctx, f'Gesperrt! 🔒')
         conn.commit()
         conn.close()
 
     @voice.command(aliases=["Unlock", "öffnen", "aufschließen"])
     async def unlock(self, ctx):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -231,19 +231,19 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.bot.send(ctx, f"{ctx.author.mention} Du besitzt keinen Channel.")
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
             channel = self.bot.get_channel(channelID)
             await channel.set_permissions(role, connect=True,read_messages=True)
-            await self.bot.send(ctx, f'{ctx.author.mention} Entsperrt! 🔓')
+            await self.bot.send(ctx, f'Entsperrt! 🔓')
         conn.commit()
         conn.close()
 
     @voice.command(aliases=["Permit", "Allow", "allow", "gewähren", "Whitelist", "whitelist"])
     async def permit(self, ctx, member : discord.Member):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -251,18 +251,18 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.bot.send(ctx, f"{ctx.author.mention} Du besitzt keinen Channel.")
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.set_permissions(member, connect=True)
-            await self.bot.send(ctx, f'{ctx.author.mention} Du hast {member.name} Zugriff auf deinen Channel gewährt. ✅')
+            await self.bot.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel gewährt. ✅')
         conn.commit()
         conn.close()
 
     @voice.command(aliases=["Reject", "Deny", "verwähren", "Blacklist", "blacklist"])
     async def reject(self, ctx, member : discord.Member):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -271,7 +271,7 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.bot.send(ctx, f"{ctx.author.mention} Du besitzt keinen Channel.")
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
@@ -282,13 +282,13 @@ class Voice(commands.Cog):
                     channel2 = self.bot.get_channel(voice[0])
                     await member.move_to(channel2)
             await channel.set_permissions(member, connect=False,read_messages=True)
-            await self.bot.send(ctx, f'{ctx.author.mention} Du hast {member.name} Zugriff auf deinen Channel verwährt. ❌')
+            await self.bot.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel verwährt. ❌')
         conn.commit()
         conn.close()
 
     @voice.command(aliases=["Limit", "Anzahl", "anzahl", "Max", "max"])
     async def limit(self, ctx, limit=0):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -296,12 +296,12 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.bot.send(ctx, f"{ctx.author.mention} Du besitzt keinen Channel.")
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(user_limit = limit)
-            await self.bot.send(ctx, f'{ctx.author.mention} Du hast das Limit auf '+ '{} Benutzer gestellt!'.format(limit))
+            await self.bot.send(ctx, f'Du hast das Limit auf '+ '{} Benutzer gestellt!'.format(limit))
             c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
             voice=c.fetchone()
             if voice is None:
@@ -313,9 +313,9 @@ class Voice(commands.Cog):
 
     @voice.command(aliases=["Name", "umbennen"])
     async def name(self, ctx,*, name = ""):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         if name == "":
-            name = f"{ctx.author.name}'s channel'"
+            name = f"{ctx.author.name}'s Tisch"
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -323,12 +323,12 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await self.bot.send(ctx, f"{ctx.author.mention} Du besitzt keinen Channel.")
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(name = name)
-            await self.bot.send(ctx, f'{ctx.author.mention} Du hast den Channelnamen zu '+ '{} geändert!'.format(name))
+            await self.bot.send(ctx, f'Du hast den Channelnamen zu '+ '`{}` geändert!'.format(name))
             c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
             voice=c.fetchone()
             if voice is None:
@@ -340,28 +340,28 @@ class Voice(commands.Cog):
 
     @voice.command(aliases=["Claim", "beanspruchen"])
     async def claim(self, ctx):
-        self.bot.deleteInvoking(ctx.message)
+        await self.bot.deleteInvoking(ctx.message)
         x = False
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
         channel = ctx.author.voice.channel
         if channel == None:
-            await self.bot.send(ctx, f"{ctx.author.mention} Du besitzt keinen Channel.")
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
             id = ctx.author.id
             c.execute("SELECT userID FROM voicechannel WHERE voiceID = %s", (channel.id,))
             voice=c.fetchone()
             if voice is None:
-                await self.bot.send(ctx, f"{ctx.author.mention} Du kannst diesen Channel nicht besitzen!")
+                await self.bot.send(ctx, f"Du kannst diesen Channel nicht besitzen!")
             else:
                 for data in channel.members:
                     if data.id == voice[0]:
                         owner = ctx.guild.get_member(voice [0])
-                        await self.bot.send(ctx, f"{ctx.author.mention} Dieser Channel ist bereits im Besitz von {owner.mention}!")
+                        await self.bot.send(ctx, f"Dieser Channel ist bereits im Besitz von {owner.mention}!")
                         x = True
                 if x == False:
-                    await self.bot.send(ctx, f"{ctx.author.mention} Du bist nun der Besitzer dieses Channels!")
+                    await self.bot.send(ctx, f"Du bist nun der Besitzer dieses Channels!")
                     c.execute("UPDATE voicechannel SET userID = %s WHERE voiceID = %s", (id, channel.id))
                     
                     c.execute("SELECT channelName, channelLimit FROM voiceusersettings WHERE userID = %s", (ctx.author.id,))
