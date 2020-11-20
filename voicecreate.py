@@ -13,7 +13,7 @@ bot = commands.Bot(command_prefix=json.load(open('config.json'))['bot_prefix'])
 
 initial_extensions = ['cogs.voice']
 
-def getBotMessageChannel(guildID):
+def getBotMessageChannel(guildID, channel):
     rtrn = 0
     try:
         conn = None
@@ -25,7 +25,11 @@ def getBotMessageChannel(guildID):
         c.close()
     except Exception as e:
         print("Die Channel ID der konnte nicht aus der Datenbank empfangen werden.\n{e}")
-    return bot.get_channel(rtrn)
+    getChannel = bot.get_channel(rtrn[0])
+    if rtrn == None:
+        return channel
+    else:
+        return getChannel
 
 async def deleteInvoking(message):
     if config["deleteInvokingMessageTimeout"] >= 0:
@@ -33,36 +37,48 @@ async def deleteInvoking(message):
             await message.delete(delay=config["deleteInvokingMessageTimeout"])
         except Exception as e:
             print(f"Couldn't delete invoking message:\n`{e}`")
-    channel = getBotMessageChannel(message.guild.id)
+    channel = getBotMessageChannel(message.guild.id, message.channel)
     if channel is None:
         channel = message.channel
     else:
         embed = discord.Embed(
-            title = f'{message.author.mention} hat in {message.channel.name} ausgeführt:',
-            description = f"{message.content}"
+            title = f'{message.content}',
+            description = f"... wurde von <@!{message.author.id}> in #{message.channel.name} ausgeführt."
         )
         await channel.send(embed=embed)
 
 setattr(bot, 'deleteInvoking', deleteInvoking)
 
-async def send(ctx, embed):
-    channel = getBotMessageChannel(ctx.guild.id)
-    if channel is None:
+async def send(ctx, input):
+    channel = getBotMessageChannel(ctx.guild.id, ctx.channel)
+    if channel == None:
         channel = ctx.channel
     if config["deleteBotMessageTimeout"] < 1:
         try:
-            if type(embed) is discord.Embed:
-                await channel.send(embed=embed)
+            if type(input) is discord.Embed:
+                await ctx.send(embed=input, delete_after=config["deleteBotMessageTimeout"])
+                await channel.send(embed=input)
             else:
-                await channel.send(embed)
+                embed = discord.Embed(
+                    title = f"{input}",
+                    description = f'{ctx.author.mention}'
+                )
+                await ctx.send(embed=embed, delete_after=config["deleteBotMessageTimeout"])
+                await channel.send(embed=embed)
         except Exception as e:
             print(f"Couldn't delete send message:\n`{e}`")
     else:
         try:
-            if type(embed) is discord.Embed:
-                await channel.send(embed=embed, delete_after=config["deleteBotMessageTimeout"])
+            if type(input) is discord.Embed:
+                await ctx.send(embed=input, delete_after=config["deleteBotMessageTimeout"])
+                await channel.send(embed=input)
             else:
-                await channel.send(embed, delete_after=config["deleteBotMessageTimeout"])
+                embed = discord.Embed(
+                    title = f"{input}",
+                    description = f'{ctx.author.mention}'
+                )
+                await ctx.send(embed=embed, delete_after=config["deleteBotMessageTimeout"])
+                await channel.send(embed=embed)
         except Exception as e:
             print(f"Couldn't delete send message:\n`{e}`")
 setattr(bot, 'send', send)
@@ -83,8 +99,10 @@ async def on_ready():
     print('------')
 
 @bot.command()
-@bot.is_owner()
 async def setBotChannel(ctx, *, botChannelId = 0):
+    if not ctx.author.id == config["owner_id"]:
+        await send(ctx, "Du bist nicht berechtigt diese Einstellung vorzunehmen!")
+        return
     if botChannelId == 0:
         await send(ctx, "Bitte gib eine channel id an!")
         return
@@ -105,5 +123,25 @@ async def setBotChannel(ctx, *, botChannelId = 0):
         await send(ctx, "Die ID des Botchannel wurde geupdated!")
     except Exception as e:
         await send(ctx, f"Ich konnte die ID des Botchannel nicht updated!\n`{e}`")
+
+@bot.command()
+async def Reset(ctx, *, arg : str):
+    if arg == "True" and ctx.author.id == config["owner_id"]:  
+        try:
+            conn = None
+            conn = psycopg2.connect(host=json.load(open("config.json"))["db-addr"], user="postgres", password=json.load(open("config.json"))["db-pass"])
+            c = conn.cursor()
+        
+            c.execute('drop table voicechannel')
+            conn.commit()
+
+            c.execute('create table voicechannel(userID bigint, voiceID bigint)')
+            conn.commit()
+
+            c.close()
+
+            await send(ctx, "Die aktuelle Channelliste wurde zurückgesetzt!")
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
 
 bot.run(json.load(open('config.json'))['bot_token'])
