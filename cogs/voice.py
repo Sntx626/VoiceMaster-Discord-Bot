@@ -174,7 +174,7 @@ class Voice(commands.Cog):
             c.execute ("UPDATE voiceguild SET voiceChannelID = %s WHERE guildID = %s",(int(newChannelId), ctx.guild.id))
             conn.commit()
             conn.close()
-            await ctx.send("Die ID des Kanals wurde geupdated!")
+            await ctx.send("Die ID des Channels wurde geupdated!")
         except Exception as e:
             await ctx.send(f"Couldn't update channel ID\n`{e}`")
 
@@ -206,7 +206,7 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Kanal.")
+            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
@@ -225,7 +225,7 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Kanal.")
+            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
@@ -244,12 +244,12 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Kanal.")
+            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.set_permissions(member, connect=True)
-            await ctx.send(f'{ctx.author.mention} Du hast {member.name} Zugriff auf deinen Kanal gewährt. ✅')
+            await ctx.send(f'{ctx.author.mention} Du hast {member.name} Zugriff auf deinen Channel gewährt. ✅')
         conn.commit()
         conn.close()
 
@@ -263,7 +263,7 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Kanal.")
+            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
@@ -274,7 +274,7 @@ class Voice(commands.Cog):
                     channel2 = self.bot.get_channel(voice[0])
                     await member.move_to(channel2)
             await channel.set_permissions(member, connect=False,read_messages=True)
-            await ctx.send(f'{ctx.author.mention} Du hast {member.name} Zugriff auf deinen Kanal verwährt. ❌')
+            await ctx.send(f'{ctx.author.mention} Du hast {member.name} Zugriff auf deinen Channel verwährt. ❌')
         conn.commit()
         conn.close()
 
@@ -289,7 +289,7 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Kanal.")
+            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
@@ -316,12 +316,12 @@ class Voice(commands.Cog):
         c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
         voice=c.fetchone()
         if voice is None:
-            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Kanal.")
+            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Channel.")
         else:
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(name = name)
-            await ctx.send(f'{ctx.author.mention} Du hast den Kanalnamen zu '+ '{} geändert!'.format(name))
+            await ctx.send(f'{ctx.author.mention} Du hast den Channelnamen zu '+ '{} geändert!'.format(name))
             c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
             voice=c.fetchone()
             if voice is None:
@@ -339,21 +339,21 @@ class Voice(commands.Cog):
         c = conn.cursor()
         channel = ctx.author.voice.channel
         if channel == None:
-            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Kanal.")
+            await ctx.send(f"{ctx.author.mention} Du besitzt keinen Channel.")
         else:
             id = ctx.author.id
             c.execute("SELECT userID FROM voicechannel WHERE voiceID = %s", (channel.id,))
             voice=c.fetchone()
             if voice is None:
-                await ctx.send(f"{ctx.author.mention} Du kannst diesen Kanal nicht besitzen!")
+                await ctx.send(f"{ctx.author.mention} Du kannst diesen Channel nicht besitzen!")
             else:
                 for data in channel.members:
                     if data.id == voice[0]:
                         owner = ctx.guild.get_member(voice [0])
-                        await ctx.send(f"{ctx.author.mention} Dieser Kanal ist bereits im Besitz von {owner.mention}!")
+                        await ctx.send(f"{ctx.author.mention} Dieser Channel ist bereits im Besitz von {owner.mention}!")
                         x = True
                 if x == False:
-                    await ctx.send(f"{ctx.author.mention} Du besitzt diesen Kanal nicht!")
+                    await ctx.send(f"{ctx.author.mention} Du besitzt diesen Channel nicht!")
                     c.execute("UPDATE voicechannel SET userID = %s WHERE voiceID = %s", (id, channel.id))
                     
                     c.execute("SELECT channelName, channelLimit FROM voiceusersettings WHERE userID = %s", (ctx.author.id,))
