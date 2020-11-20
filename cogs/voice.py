@@ -197,7 +197,7 @@ class Voice(commands.Cog):
         conn.commit()
         conn.close()
 
-    @voice.command()
+    @voice.command(aliases=["Lock", "sperren", "beschränken", "abschließen"])
     async def lock(self, ctx):
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -216,7 +216,7 @@ class Voice(commands.Cog):
         conn.commit()
         conn.close()
 
-    @voice.command()
+    @voice.command(aliases=["Unlock", "öffnen", "aufschließen"])
     async def unlock(self, ctx):
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -235,7 +235,7 @@ class Voice(commands.Cog):
         conn.commit()
         conn.close()
 
-    @voice.command(aliases=["allow"])
+    @voice.command(aliases=["Permit", "Allow", "allow", "gewähren", "Whitelist", "whitelist"])
     async def permit(self, ctx, member : discord.Member):
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -253,7 +253,7 @@ class Voice(commands.Cog):
         conn.commit()
         conn.close()
 
-    @voice.command(aliases=["deny"])
+    @voice.command(aliases=["Reject", "Deny", "verwähren", "Blacklist", "blacklist"])
     async def reject(self, ctx, member : discord.Member):
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -278,7 +278,7 @@ class Voice(commands.Cog):
         conn.commit()
         conn.close()
 
-    @voice.command()
+    @voice.command(aliases=["Limit", "Anzahl", "anzahl", "Max", "max"])
     async def limit(self, ctx, limit=0):
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -302,7 +302,7 @@ class Voice(commands.Cog):
         conn.commit()
         conn.close()
 
-    @voice.command()
+    @voice.command(aliases=["Name", "umbennen"])
     async def name(self, ctx,*, name = ""):
         if name == "":
             name = f"{ctx.author.name}'s channel'"
@@ -328,7 +328,7 @@ class Voice(commands.Cog):
         conn.commit()
         conn.close()
 
-    @voice.command()
+    @voice.command(aliases=["Claim", "beanspruchen"])
     async def claim(self, ctx):
         x = False
         conn = None
