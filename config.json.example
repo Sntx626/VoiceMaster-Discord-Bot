@@ -4,5 +4,7 @@
 	"owner_id": 0,
 	"db-addr": "",
     "db-pass": "",
-    "large_server": false
+    "large_server": false,
+	"deleteBotMessageTimeout": 0,
+	"deleteInvokingMessageTimeout": 1
 }
