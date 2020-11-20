@@ -153,7 +153,7 @@ class Voice(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def setCategoryId(self, ctx, newCategoryId):
-        await self.client.deleteInvoking(ctx.message)
+        
         try:
             conn = None
             conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -168,7 +168,7 @@ class Voice(commands.Cog):
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def setChannelId(self, ctx, newChannelId):
-        await self.client.deleteInvoking(ctx.message)
+        
         try:
             conn = None
             conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
@@ -182,7 +182,7 @@ class Voice(commands.Cog):
 
     @voice.command()
     async def setlimit(self, ctx, num):
-        await self.client.deleteInvoking(ctx.message)
+        
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -201,7 +201,7 @@ class Voice(commands.Cog):
 
     @voice.command()
     async def lock(self, ctx):
-        await self.client.deleteInvoking(ctx.message)
+        
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -221,7 +221,7 @@ class Voice(commands.Cog):
 
     @voice.command()
     async def unlock(self, ctx):
-        await self.client.deleteInvoking(ctx.message)
+        
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -241,7 +241,7 @@ class Voice(commands.Cog):
 
     @voice.command(aliases=["allow"])
     async def permit(self, ctx, member : discord.Member):
-        await self.client.deleteInvoking(ctx.message)
+        
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -260,7 +260,7 @@ class Voice(commands.Cog):
 
     @voice.command(aliases=["deny"])
     async def reject(self, ctx, member : discord.Member):
-        await self.client.deleteInvoking(ctx.message)
+        
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -288,7 +288,7 @@ class Voice(commands.Cog):
 
     @voice.command()
     async def limit(self, ctx, limit):
-        await self.client.deleteInvoking(ctx.message)
+        
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -314,7 +314,7 @@ class Voice(commands.Cog):
 
     @voice.command()
     async def name(self, ctx,*, name):
-        await self.client.deleteInvoking(ctx.message)
+        
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
         c = conn.cursor()
@@ -339,7 +339,7 @@ class Voice(commands.Cog):
 
     @voice.command()
     async def claim(self, ctx):
-        await self.client.deleteInvoking(ctx.message)
+        
         x = False
         conn = None
         conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
