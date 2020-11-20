@@ -89,26 +89,26 @@ class Voice(commands.Cog):
         if ctx.author.id == config['owner_id']:
             def check(m):
                 return m.author.id == ctx.author.id
-            await ctx.send("**You have 60 seconds to answer each question!**")
-            await ctx.send("**Do you want to use a preexisting category and channel%s**(yes/no):")
+            await ctx.send("**Du hast 60 Sekunden jede Frage zu beantworten!**")
+            await ctx.send("**Möchtest du eine bereits existierende Kategorie und Channel verwenden?**(ja/nein):")
             try:
                 answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
             except asyncio.TimeoutError:
-                await ctx.send('Took too long to answer!')
+                await ctx.send('Antwort hat zu lang gebraucht!')
             else:
-                if answer.content == "no":
-                    await ctx.send(f"**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
+                if answer.content == "nein":
+                    await ctx.send(f"**Bitte gebe nun den Namen der Kategrie ein, die erstellt werden soll: (z.B. Voice Channels)**")
                     try:
                         category = await self.bot.wait_for('message', check=check, timeout = 60.0)
                     except asyncio.TimeoutError:
-                        await ctx.send('Took too long to answer!')
+                        await ctx.send('Antwort hat zu lang gebraucht!')
                     else:
                         new_cat = await ctx.guild.create_category_channel(category.content)
-                    await ctx.send('**Enter the name of the voice channel: (e.g Join To Create)**')
+                    await ctx.send('**Bitte gib nun den Namen des Sprachchannels ein, den ich erstellen soll: (z.B. Join To Create)**')
                     try:
                         channel = await self.bot.wait_for('message', check=check, timeout = 60.0)
                     except asyncio.TimeoutError:
-                        await ctx.send('Took too long to answer!')
+                        await ctx.send('Antwort hat zu lang gebraucht!')
                     else:
                         try:
                             channel = await ctx.guild.create_voice_channel(channel.content, category=new_cat)
@@ -118,21 +118,21 @@ class Voice(commands.Cog):
                                 c.execute ("INSERT INTO voiceguild VALUES (%s, %s, %s, %s)",(guildID,id,channel.id,new_cat.id))
                             else:
                                 c.execute ("UPDATE voiceguild SET guildID = %s, ownerID = %s, voiceChannelID = %s, voiceCategoryID = %s WHERE guildID = %s",(guildID,id,channel.id,new_cat.id, guildID))
-                            await ctx.send("**You are all setup and ready to go!**")
+                            await ctx.send("**Du bist nun eingerichtet und bereit!**")
                         except:
-                            await ctx.send("You didn't enter the names properly.\nUse `.voice setup` again!")
+                            await ctx.send("Du hast die Namen nicht richtig eingegeben.\nBitte verwende `.voice setup` nocheinmal!")
                 else:
-                    await ctx.send(f"**Enter the id of the category you wish to use:**")
+                    await ctx.send(f"**Bitte gib nun die ID der Kategorie ein, die du verwenden möchtest:**")
                     try:
                         categoryId = await self.bot.wait_for('message', check=check, timeout = 60.0)
                     except asyncio.TimeoutError:
-                        await ctx.send('Took too long to answer!')
+                        await ctx.send('Antwort hat zu lang gebraucht!')
                     else:
-                        await ctx.send(f"**Enter the id of the channel you wish to use:**")
+                        await ctx.send(f"**Bitte gib nun die ID des Channels ein, den du verwenden möchtest:**")
                         try:
                             channelId = await self.bot.wait_for('message', check=check, timeout = 60.0)
                         except asyncio.TimeoutError:
-                            await ctx.send('Took too long to answer!')
+                            await ctx.send('Antwort hat zu lang gebraucht!')
                         else:
                             c.execute("SELECT * FROM voiceguild WHERE guildID = %s AND ownerID=%s", (guildID, id))
                             voice=c.fetchone()
@@ -140,9 +140,9 @@ class Voice(commands.Cog):
                                 c.execute ("INSERT INTO voiceguild VALUES (%s, %s, %s, %s)",(guildID,id,int(channelId.content),int(categoryId.content)))
                             else:
                                 c.execute ("UPDATE voiceguild SET guildID = %s, ownerID = %s, voiceChannelID = %s, voiceCategoryID = %s WHERE guildID = %s",(guildID,id,int(channelId.content),int(categoryId.content), guildID))
-                            await ctx.send("**You are all setup and ready to go!**")
+                            await ctx.send("**Du bist nun eingerichtet und bereit!**")
         else:
-            await ctx.send(f"{ctx.author.mention} only the owner of the server can setup the bot!")
+            await ctx.send(f"{ctx.author.mention} nur der Besitzer des Servers kann diese Einstellung vornehmen!")
         conn.commit()
         conn.close()
 
