@@ -174,7 +174,7 @@ class Voice(commands.Cog):
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
-            channel = self.client.get_channel(channelID)
+            channel = self.client.get_channel(int(channelID))
             await channel.set_permissions(role, connect=False, read_messages=True)
             await self.client.send(ctx, f'Gesperrt! 🔒')
 
@@ -190,7 +190,7 @@ class Voice(commands.Cog):
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
-            channel = self.client.get_channel(channelID)
+            channel = self.client.get_channel(int(channelID))
             await channel.set_permissions(role, connect=True, read_messages=True)
             await self.client.send(ctx, f'Entsperrt! 🔓')
 
@@ -205,7 +205,7 @@ class Voice(commands.Cog):
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.client.get_channel(channelID)
+            channel = self.client.get_channel(int(channelID))
             await channel.set_permissions(member, connect=True)
             await self.client.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel gewährt. ✅')
 
@@ -220,11 +220,11 @@ class Voice(commands.Cog):
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.client.get_channel(channelID)
+            channel = self.client.get_channel(int(channelID))
             for members in channel.members:
                 if members.id == member.id:
                     channelID = await self.client.conn.fetchval("SELECT voiceChannelID FROM voiceguild WHERE guildID = $1", ctx.guild.id)
-                    createChannel = self.client.get_channel(channelID)
+                    createChannel = self.client.get_channel(int(channelID))
                     await member.move_to(createChannel)
             await channel.set_permissions(member, connect=False,read_messages=True)
             await self.client.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel verwährt. ❌')
@@ -240,7 +240,7 @@ class Voice(commands.Cog):
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.client.get_channel(channelID)
+            channel = self.client.get_channel(int(channelID))
             await channel.edit(user_limit = limit)
             await self.client.send(ctx, f'Du hast das Limit auf {limit} Benutzer gestellt!')
             voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", ctx.author.id)
@@ -254,7 +254,7 @@ class Voice(commands.Cog):
         self.client.tExcept(error)
 
     @voice.command()
-    async def name(self, ctx,*, name):
+    async def name(self, ctx,*, name=""):
         await self.client.deleteInvoking(ctx.message)
         if name == "":
             name = f"{ctx.author.name}'s Channel"
@@ -262,7 +262,7 @@ class Voice(commands.Cog):
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.client.get_channel(channelID)
+            channel = self.client.get_channel(int(channelID))
             await channel.edit(name = name)
             await self.client.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
             voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", id)
@@ -287,8 +287,8 @@ class Voice(commands.Cog):
                 await self.client.send(ctx, f"Du kannst diesen Channel nicht besitzen!")
             else:
                 for member in channel.members:
-                    if member.id == userID:
-                        owner = ctx.guild.get_member(userID)
+                    if member.id == int(userID):
+                        owner = ctx.guild.get_member(int(userID))
                         await self.client.send(ctx, f"Dieser Channel ist bereits im Besitz von {owner.mention}!")
                         return
                 await self.client.conn.execute("UPDATE voicechannel SET userID = $1 WHERE voiceID = $2", ctx.author.id, channel.id)
