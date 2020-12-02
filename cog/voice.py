@@ -67,7 +67,7 @@ class Voice(commands.Cog):
                     if limit is None or not settings["channellimit"] == 0:
                         limit = settings["channellimit"]
                 category = self.client.get_channel(categoryID)
-                createdChannel = await member.guild.create_voice_channel(name,category=category)
+                createdChannel = await member.guild.create_voice_channel(name, category=category)
                 await member.move_to(createdChannel)
                 await createdChannel.set_permissions(self.client.user, connect=True, read_messages=True)
                 await createdChannel.edit(name=name, user_limit=limit)
@@ -76,7 +76,7 @@ class Voice(commands.Cog):
                     return len(createdChannel.members) == 0
                 await self.client.wait_for('voice_state_update', check=check)
                 await createdChannel.delete()
-                await self.client.conn.execute('DELETE FROM voicechannel WHERE userID=$1', member.id)
+                await self.client.conn.execute('DELETE FROM voicechannel WHERE userID=$1 AND voiceID=$2', member.id, createdChannel.id)
         except Exception as e:
             self.client.tExcept(e)
 
