@@ -238,6 +238,8 @@ class Voice(commands.Cog):
     @voice.command(aliases=["Limit", "Anzahl", "anzahl", "Max", "max", "Begrenzung", "begrenzung"])
     async def limit(self, ctx, limit=0):
         await self.client.deleteInvoking(ctx.message)
+        if limit > 99:
+            limit = 99
         channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
