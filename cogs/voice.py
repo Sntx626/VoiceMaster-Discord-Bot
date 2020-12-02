@@ -301,7 +301,7 @@ class Voice(commands.Cog):
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(user_limit = limit)
-            await self.bot.send(ctx, f'Du hast das Limit auf '+ '{} Benutzer gestellt!'.format(limit))
+            await self.bot.send(ctx, f'Du hast das Limit auf {limit} Benutzer gestellt!')
             c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
             voice=c.fetchone()
             if voice is None:
@@ -328,7 +328,7 @@ class Voice(commands.Cog):
             channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(name = name)
-            await self.bot.send(ctx, f'Du hast den Channelnamen zu '+ '`{}` geändert!'.format(name))
+            await self.bot.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
             c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
             voice=c.fetchone()
             if voice is None:
@@ -347,7 +347,7 @@ class Voice(commands.Cog):
         c = conn.cursor()
         channel = ctx.author.voice.channel
         if channel == None:
-            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
+            await self.bot.send(ctx, f"Du befindest dich in keinen Channel.")
         else:
             id = ctx.author.id
             c.execute("SELECT userID FROM voicechannel WHERE voiceID = %s", (channel.id,))
