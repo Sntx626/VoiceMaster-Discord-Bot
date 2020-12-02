@@ -50,7 +50,7 @@ class Voice(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        if after is None:
+        if after.channel is None:
             return
         channelID = await self.client.conn.fetchval("SELECT voiceChannelID FROM voiceguild WHERE guildid = $1", member.guild.id)
         try:
@@ -78,7 +78,7 @@ class Voice(commands.Cog):
                 await createdChannel.delete()
                 await self.client.conn.execute('DELETE FROM voicechannel WHERE userID=$1', member.id)
         except Exception as e:
-            self.client.tExcept(f"state update: {e}")
+            self.client.tExcept(e)
 
     @commands.group()
     async def voice(self, ctx):
