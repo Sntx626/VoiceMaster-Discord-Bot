@@ -9,7 +9,7 @@ config = json.load(open("config.json"))["VoiceMaster-Discord-Bot"]
 async def askIfNew(self, ctx, check):
     await self.client.send(ctx, "**Möchtest du eine bereits existierende Kategorie und Channel verwenden?**(ja/nein):")
     try:
-        answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
+        answer = await self.client.wait_for('message', check=check, timeout = 60.0)
     except asyncio.TimeoutError:
         await self.client.send(ctx, "Antwort hat zu lang gebraucht!\nBitte erneut versuchen.")
     else:
@@ -24,7 +24,7 @@ async def askForCategory(self, ctx, check, new : bool):
     else:
         await self.client.send(ctx, "**Bitte gib nun die ID der Kategorie ein, die du verwenden möchtest:**")
     try:
-        category = await self.bot.wait_for('message', check=check, timeout = 60.0)
+        category = await self.client.wait_for('message', check=check, timeout = 60.0)
     except asyncio.TimeoutError:
         await self.client.send(ctx, "Antwort hat zu lang gebraucht!\nBitte erneut versuchen.")
     else:
@@ -36,7 +36,7 @@ async def askForChannel(self, ctx, check, new : bool):
     else:
         await self.client.send(ctx, "**Bitte gib nun die ID des Channels ein, den du verwenden möchtest:**")
     try:
-        channel = await self.bot.wait_for('message', check=check, timeout = 60.0)
+        channel = await self.client.wait_for('message', check=check, timeout = 60.0)
     except asyncio.TimeoutError:
         await self.client.send(ctx, "Antwort hat zu lang gebraucht!\nBitte erneut versuchen.")
     else:
@@ -59,9 +59,9 @@ class Voice(commands.Cog):
                     if limit is None:
                         limit = 0
                 else:
-                    name = settings["channelName"]
-                    if limit is None or not settings["channelLimit"] == 0:
-                        limit = settings["channelLimit"]
+                    name = settings["channelname"]
+                    if limit is None or not settings["channellimit"] == 0:
+                        limit = settings["channellimit"]
                 category = self.client.get_channel(categoryID)
                 createdChannel = await member.guild.create_voice_channel(name,category=category)
                 await member.move_to(createdChannel)
@@ -125,9 +125,9 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         try:
             await self.client.conn.execute("UPDATE voiceguild SET voiceCategoryID = $1 WHERE guildID = $2", int(newCategoryId), ctx.guild.id)
-            await self.bot.send(ctx, "Die ID der Kategorie wurde geupdated!")
+            await self.client.send(ctx, "Die ID der Kategorie wurde geupdated!")
         except Exception as e:
-            await self.bot.send(ctx, f"Die ID der Kategorie konnte nicht geupdated werden!\n`{e}`")
+            await self.client.send(ctx, f"Die ID der Kategorie konnte nicht geupdated werden!\n`{e}`")
 
     @setCategoryId.error
     async def info_error(self, ctx, error):
@@ -139,9 +139,9 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         try:
             await self.client.conn.execute("UPDATE voiceguild SET voiceChannelID = $1 WHERE guildID = $2", int(newChannelId), ctx.guild.id)
-            await self.bot.send(ctx, "Die ID des Channels wurde geupdated!")
+            await self.client.send(ctx, "Die ID des Channels wurde geupdated!")
         except Exception as e:
-            await self.bot.send(ctx, f"Die ID des Channels konnte nicht geupdated werden!\n`{e}`")
+            await self.client.send(ctx, f"Die ID des Channels konnte nicht geupdated werden!\n`{e}`")
 
     @setChannelId.error
     async def info_error(self, ctx, error):
@@ -156,9 +156,9 @@ class Voice(commands.Cog):
                 await self.client.conn.execute("INSERT INTO voiceguildsettings VALUES ($1, $2, $3, $4)", ctx.guild.id, f"{ctx.author.name}'s channel", 0, 0)
             else:
                 await self.client.conn.execute("UPDATE voiceguildsettings SET channelLimit = $1 WHERE guildID = $2", num, ctx.guild.id)
-            await self.bot.send(ctx, f"Du hast das Standardlimit für Sprachkanäle des Servers verändert!\nNeu: {num}")
+            await self.client.send(ctx, f"Du hast das Standardlimit für Sprachkanäle des Servers verändert!\nNeu: {num}")
         else:
-            await self.bot.send(ctx, f"Nur der besitzer des Servers kann diese Einstellung ändern!")
+            await self.client.send(ctx, f"Nur der besitzer des Servers kann diese Einstellung ändern!")
 
     @setGuildChannelLimit.error
     async def info_error(self, ctx, error):
@@ -169,12 +169,12 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
-            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
+            await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
-            channel = self.bot.get_channel(channelID)
+            channel = self.client.get_channel(channelID)
             await channel.set_permissions(role, connect=False, read_messages=True)
-            await self.bot.send(ctx, f'Gesperrt! 🔒')
+            await self.client.send(ctx, f'Gesperrt! 🔒')
 
     @lock.error
     async def info_error(self, ctx, error):
@@ -185,12 +185,12 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
-            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
+            await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
-            channel = self.bot.get_channel(channelID)
+            channel = self.client.get_channel(channelID)
             await channel.set_permissions(role, connect=True, read_messages=True)
-            await self.bot.send(ctx, f'Entsperrt! 🔓')
+            await self.client.send(ctx, f'Entsperrt! 🔓')
 
     @unlock.error
     async def info_error(self, ctx, error):
@@ -201,11 +201,11 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
-            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
+            await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.bot.get_channel(channelID)
+            channel = self.client.get_channel(channelID)
             await channel.set_permissions(member, connect=True)
-            await self.bot.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel gewährt. ✅')
+            await self.client.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel gewährt. ✅')
 
     @permit.error
     async def info_error(self, ctx, error):
@@ -216,16 +216,16 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", id)
         if channelID is None:
-            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
+            await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.bot.get_channel(channelID)
+            channel = self.client.get_channel(channelID)
             for members in channel.members:
                 if members.id == member.id:
                     channelID = await self.client.conn.fetchval("SELECT voiceChannelID FROM voiceguild WHERE guildID = $1", ctx.guild.id)
-                    createChannel = self.bot.get_channel(channelID)
+                    createChannel = self.client.get_channel(channelID)
                     await member.move_to(createChannel)
             await channel.set_permissions(member, connect=False,read_messages=True)
-            await self.bot.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel verwährt. ❌')
+            await self.client.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel verwährt. ❌')
 
     @reject.error
     async def info_error(self, ctx, error):
@@ -236,11 +236,11 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
-            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
+            await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.bot.get_channel(channelID)
+            channel = self.client.get_channel(channelID)
             await channel.edit(user_limit = limit)
-            await self.bot.send(ctx, f'Du hast das Limit auf {limit} Benutzer gestellt!')
+            await self.client.send(ctx, f'Du hast das Limit auf {limit} Benutzer gestellt!')
             voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", ctx.author.id)
             if voice is None:
                 await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, f'{ctx.author.name}', limit)
@@ -258,11 +258,11 @@ class Voice(commands.Cog):
             name = f"{ctx.author.name}'s Tisch"
         channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = %s", ctx.author.id)
         if channelID is None:
-            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
+            await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.bot.get_channel(channelID)
+            channel = self.client.get_channel(channelID)
             await channel.edit(name = name)
-            await self.bot.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
+            await self.client.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
             voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", id)
             if voice is None:
                 await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, name, 0)
@@ -278,26 +278,26 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         channel = ctx.author.voice.channel
         if channel == None:
-            await self.bot.send(ctx, f"Du befindest dich in keinen Channel.")
+            await self.client.send(ctx, f"Du befindest dich in keinen Channel.")
         else:
             userID = await self.client.conn.fetchval("SELECT userID FROM voicechannel WHERE voiceID = $1", channel.id)
             if userID is None:
-                await self.bot.send(ctx, f"Du kannst diesen Channel nicht besitzen!")
+                await self.client.send(ctx, f"Du kannst diesen Channel nicht besitzen!")
             else:
                 for member in channel.members:
                     if member.id == userID:
                         owner = ctx.guild.get_member(userID)
-                        await self.bot.send(ctx, f"Dieser Channel ist bereits im Besitz von {owner.mention}!")
+                        await self.client.send(ctx, f"Dieser Channel ist bereits im Besitz von {owner.mention}!")
                         return
                 await self.client.conn.execute("UPDATE voicechannel SET userID = $1 WHERE voiceID = $2", ctx.author.id, channel.id)
-                await self.bot.send(ctx, f"Du bist nun der Besitzer dieses Channels!")
+                await self.client.send(ctx, f"Du bist nun der Besitzer dieses Channels!")
                 settings = await self.client.conn.fetchrow("SELECT channelName, channelLimit FROM voiceusersettings WHERE userID = $1", ctx.author.id)
                 if not settings is None:
-                    await channel.edit(name=settings["channelName"], user_limit=settings["channelLimit"])
+                    await channel.edit(name=settings["channelname"], user_limit=settings["channellimit"])
 
     @claim.error
     async def info_error(self, ctx, error):
         self.client.tExcept(error)
 
-def setup(bot):
-    bot.add_cog(Voice(bot))
+def setup(client):
+    client.add_cog(Voice(client))
