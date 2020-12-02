@@ -218,7 +218,7 @@ class Voice(commands.Cog):
     @voice.command(aliases=["Reject", "Deny", "verwähren", "Blacklist", "blacklist"])
     async def reject(self, ctx, member : discord.Member):
         await self.client.deleteInvoking(ctx.message)
-        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", id)
+        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
@@ -267,7 +267,7 @@ class Voice(commands.Cog):
             channel = self.client.get_channel(int(channelID))
             await channel.edit(name = name)
             await self.client.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
-            voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", id)
+            voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", ctx.author.id)
             if voice is None:
                 await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, name, 0)
             else:
