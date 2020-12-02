@@ -76,7 +76,7 @@ class Voice(commands.Cog):
                     return len(createdChannel.members) == 0
                 await self.client.wait_for('voice_state_update', check=check)
                 await createdChannel.delete()
-                await self.client.conn.execute('DELETE FROM voicechannel WHERE voiceID=$2', createdChannel.id)
+                await self.client.conn.execute('DELETE FROM voicechannel WHERE voiceID=$1', createdChannel.id)
         except Exception as e:
             self.client.tExcept(e)
 
