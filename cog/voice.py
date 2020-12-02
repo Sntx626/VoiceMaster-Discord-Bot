@@ -125,7 +125,7 @@ class Voice(commands.Cog):
     
     @voice.command()
     @commands.has_permissions(administrator=True)
-    async def setCategoryId(self, ctx, newCategoryId):
+    async def setCategoryId(self, ctx, newCategoryId : int):
         await self.client.deleteInvoking(ctx.message)
         try:
             await self.client.conn.execute("UPDATE voiceguild SET voiceCategoryID = $1 WHERE guildID = $2", int(newCategoryId), ctx.guild.id)
@@ -139,7 +139,7 @@ class Voice(commands.Cog):
     
     @voice.command()
     @commands.has_permissions(administrator=True)
-    async def setChannelId(self, ctx, newChannelId):
+    async def setChannelId(self, ctx, newChannelId : int):
         await self.client.deleteInvoking(ctx.message)
         try:
             await self.client.conn.execute("UPDATE voiceguild SET voiceChannelID = $1 WHERE guildID = $2", int(newChannelId), ctx.guild.id)
@@ -152,14 +152,14 @@ class Voice(commands.Cog):
         self.client.tExcept(error)
 
     @voice.command()
-    async def setGuildChannelLimit(self, ctx, num : int):
+    async def setGuildChannelLimit(self, ctx, num=0):
         await self.client.deleteInvoking(ctx.message)
         if ctx.author.id == ctx.guild.owner_id:
             voice = await self.client.conn.fetchrow("SELECT * FROM voiceguildsettings WHERE guildID = $1", ctx.guild.id)
             if voice is None:
                 await self.client.conn.execute("INSERT INTO voiceguildsettings VALUES ($1, $2, $3, $4)", ctx.guild.id, f"{ctx.author.name}'s channel", 0, 0)
             else:
-                await self.client.conn.execute("UPDATE voiceguildsettings SET channelLimit = $1 WHERE guildID = $2", num, ctx.guild.id)
+                await self.client.conn.execute("UPDATE voiceguildsettings SET channelLimit = $1 WHERE guildID = $2", int(num), ctx.guild.id)
             await self.client.send(ctx, f"Du hast das Standardlimit für Sprachkanäle des Servers verändert!\nNeu: {num}")
         else:
             await self.client.send(ctx, f"Nur der besitzer des Servers kann diese Einstellung ändern!")
@@ -236,20 +236,20 @@ class Voice(commands.Cog):
         self.client.tExcept(error)
 
     @voice.command(aliases=["Limit", "Anzahl", "anzahl", "Max", "max", "Begrenzung", "begrenzung"])
-    async def limit(self, ctx, limit):
+    async def limit(self, ctx, limit=0):
         await self.client.deleteInvoking(ctx.message)
         channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
             channel = self.client.get_channel(int(channelID))
-            await channel.edit(user_limit = limit)
+            await channel.edit(user_limit = int(limit))
             await self.client.send(ctx, f'Du hast das Limit auf {limit} Benutzer gestellt!')
             voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", ctx.author.id)
             if voice is None:
-                await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, f'{ctx.author.name}', limit)
+                await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, f'{ctx.author.name}', int(limit))
             else:
-                await self.client.conn.execute("UPDATE voiceusersettings SET channelLimit = $1 WHERE userID = $2", limit, ctx.author.id)
+                await self.client.conn.execute("UPDATE voiceusersettings SET channelLimit = $1 WHERE userID = $2", int(limit), ctx.author.id)
 
     @limit.error
     async def info_error(self, ctx, error):
