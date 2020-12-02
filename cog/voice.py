@@ -45,6 +45,8 @@ async def askForChannel(self, ctx, check, new : bool):
 class Voice(commands.Cog):
     def __init__(self, client):
         self.client = client
+        # client.conn.execute("drop table voicechannel")
+        # client.conn.execute("create table voicechannel(userID bigint, voiceID bigint)")
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
