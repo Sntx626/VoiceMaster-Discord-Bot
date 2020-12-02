@@ -50,6 +50,8 @@ class Voice(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
+        if after is None:
+            return
         channelID = await self.client.conn.fetchval("SELECT voiceChannelID FROM voiceguild WHERE guildid = $1", member.guild.id)
         try:
             if after.channel.id == channelID:
