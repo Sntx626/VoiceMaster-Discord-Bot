@@ -91,9 +91,9 @@ class Voice(commands.Cog):
             def check(message):
                 return message.author.id == ctx.author.id
             await self.client.send(ctx, "**Du hast 60 Sekunden jede Frage zu beantworten!**")
-            new = askIfNew(self, ctx, check)
-            category = askForCategory(self, ctx, check, new)
-            channel = askForChannel(self, ctx, check, new)
+            new = await askIfNew(self, ctx, check)
+            category = await askForCategory(self, ctx, check, new)
+            channel = await askForChannel(self, ctx, check, new)
             if new:
                 try:
                     category = await ctx.guild.create_category_channel(category)
