@@ -300,6 +300,8 @@ class Voice(commands.Cog):
                 settings = await self.client.conn.fetchrow("SELECT channelName, channelLimit FROM voiceusersettings WHERE userID = $1", ctx.author.id)
                 if not settings is None:
                     await channel.edit(name=settings["channelname"], user_limit=settings["channellimit"])
+                else:
+                    await channel.edit(name=f"{ctx.author.name}'s Channel", user_limit=0)
 
     @claim.error
     async def info_error(self, ctx, error):
