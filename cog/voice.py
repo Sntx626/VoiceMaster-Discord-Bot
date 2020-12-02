@@ -78,7 +78,7 @@ class Voice(commands.Cog):
                 await createdChannel.delete()
                 await self.client.conn.execute('DELETE FROM voicechannel WHERE userID=$1', member.id)
         except Exception as e:
-            self.client.tExcept(e)
+            self.client.tExcept(f"state update: {e}")
 
     @commands.group()
     async def voice(self, ctx):
