@@ -2,369 +2,302 @@ import asyncio
 import json
 
 import discord
-import psycopg2
 from discord.ext import commands
 
 config = json.load(open("config.json"))["VoiceMaster-Discord-Bot"]
 
+async def askIfNew(self, ctx, check):
+    await self.client.send(ctx, "**Möchtest du eine bereits existierende Kategorie und Channel verwenden?**(ja/nein):")
+    try:
+        answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
+    except asyncio.TimeoutError:
+        await self.client.send(ctx, "Antwort hat zu lang gebraucht!\nBitte erneut versuchen.")
+    else:
+        if answer.content == "ja":
+            return False
+        else:
+            return True
+
+async def askForCategory(self, ctx, check, new : bool):
+    if new:
+        await self.client.send(ctx, "**Bitte gebe nun den Namen der Kategrie ein, die erstellt werden soll: (z.B. Voice Channels)**")
+    else:
+        await self.client.send(ctx, "**Bitte gib nun die ID der Kategorie ein, die du verwenden möchtest:**")
+    try:
+        category = await self.bot.wait_for('message', check=check, timeout = 60.0)
+    except asyncio.TimeoutError:
+        await self.client.send(ctx, "Antwort hat zu lang gebraucht!\nBitte erneut versuchen.")
+    else:
+        return category.content
+
+async def askForChannel(self, ctx, check, new : bool):
+    if new:
+        await self.client.send(ctx, "**Bitte gib nun den Namen des Channels ein, den ich erstellen soll: (z.B. Join To Create)**")
+    else:
+        await self.client.send(ctx, "**Bitte gib nun die ID des Channels ein, den du verwenden möchtest:**")
+    try:
+        channel = await self.bot.wait_for('message', check=check, timeout = 60.0)
+    except asyncio.TimeoutError:
+        await self.client.send(ctx, "Antwort hat zu lang gebraucht!\nBitte erneut versuchen.")
+    else:
+        return channel.content
+
 class Voice(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, client):
+        self.client = client
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        guildID = member.guild.id
-        c.execute("SELECT voiceChannelID FROM voiceguild WHERE guildID = %s", (guildID,))
-        voice=c.fetchone()
-        if voice is None:
-            pass #self.bot.tPrint("Voice is None")
-        else:
-            voiceID = voice[0]
-            try:
-                if after.channel.id == voiceID:
-                    c.execute("SELECT * FROM voicechannel WHERE userID = %s", (member.id,))
-                    cooldown=c.fetchone()
-                    if cooldown is None or not config['large_server']:
-                        pass
-                    else:
-                        await member.send("Creating channels too quickly you've been put on a 15 second cooldown!")
-                        await asyncio.sleep(15)
-                    c.execute("SELECT voiceCategoryID FROM voiceguild WHERE guildID = %s", (guildID,))
-                    voice=c.fetchone()
-                    c.execute("SELECT channelName, channelLimit FROM voiceusersettings WHERE userID = %s", (member.id,))
-                    setting=c.fetchone()
-                    c.execute("SELECT channelLimit FROM voiceguildsettings WHERE guildID = %s", (guildID,))
-                    guildSetting=c.fetchone()
-                    if setting is None:
-                        name = f"{member.name}'s channel"
-                        if guildSetting is None:
-                            limit = 0
-                        else:
-                            limit = guildSetting[0]
-                    else:
-                        if guildSetting is None:
-                            name = setting[0]
-                            limit = setting[1]
-                        elif guildSetting is not None and setting[1] == 0:
-                            name = setting[0]
-                            limit = guildSetting[0]
-                        else:
-                            name = setting[0]
-                            limit = setting[1]
-                    categoryID = voice[0]
-                    id = member.id
-                    category = self.bot.get_channel(categoryID)
-                    channel2 = await member.guild.create_voice_channel(name,category=category)
-                    channelID = channel2.id
-                    await member.move_to(channel2)
-                    await channel2.set_permissions(self.bot.user, connect=True,read_messages=True)
-                    await channel2.edit(name= name, user_limit = limit)
-                    c.execute("INSERT INTO voicechannel VALUES (%s, %s)", (id,channelID))
-                    conn.commit()
-                    def check(a,b,c):
-                        return len(channel2.members) == 0
-                    await self.bot.wait_for('voice_state_update', check=check)
-                    await channel2.delete()
-                    #await asyncio.sleep(3)
-                    c.execute('DELETE FROM voicechannel WHERE userID=%s', (id,))
-            except:
-                pass #self.bot.tExcept(e)
-        conn.commit()
-        conn.close()
+        channelID = await self.client.conn.fetchval("SELECT voiceChannelID FROM voiceguild WHERE guildid = $1", member.guild.id)
+        try:
+            if after.channel.id == channelID:
+                categoryID = await self.client.conn.fetchval("SELECT voiceCategoryID FROM voiceguild WHERE guildID = $1", member.guild.id)
+                settings = await self.client.conn.fetchrow("SELECT channelName, channelLimit FROM voiceusersettings WHERE userID = $1", member.id)
+                limit = await self.client.conn.fetchval("SELECT channelLimit FROM voiceguildsettings WHERE guildID = $1", member.guild.id)
+                if settings is None:
+                    name = f"{member.name}'s channel"
+                    if limit is None:
+                        limit = 0
+                else:
+                    name = settings["channelName"]
+                    if limit is None or not settings["channelLimit"] == 0:
+                        limit = settings["channelLimit"]
+                category = self.client.get_channel(categoryID)
+                createdChannel = await member.guild.create_voice_channel(name,category=category)
+                await member.move_to(createdChannel)
+                await createdChannel.set_permissions(self.client.user, connect=True, read_messages=True)
+                await createdChannel.edit(name=name, user_limit=limit)
+                await self.client.conn.execute("INSERT INTO voicechannel VALUES ($1, $2)", member.id, createdChannel.id)
+                def check(a,b,c):
+                    return len(createdChannel.members) == 0
+                await self.client.wait_for('voice_state_update', check=check)
+                await createdChannel.delete()
+                await self.client.conn.execute('DELETE FROM voicechannel WHERE userID=$1', member.id)
+        except Exception as e:
+            self.client.tExcept(e)
 
     @commands.group()
     async def voice(self, ctx):
-        pass
+        pass # creates group voice
 
     @voice.command()
     async def setup(self, ctx):
         await self.client.deleteInvoking(ctx.message)
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        guildID = ctx.guild.id
-        id = ctx.author.id
-        if ctx.author.id == config['owner_id']:
-            def check(m):
-                return m.author.id == ctx.author.id
-            await self.client.send(ctx, "**You have 60 seconds to answer each question!**")
-            await self.client.send(ctx, "**Do you want to use a preexisting category and channel%s**(yes/no):")
-            try:
-                answer = await self.bot.wait_for('message', check=check, timeout = 60.0)
-            except asyncio.TimeoutError:
-                await self.client.send(ctx, 'Took too long to answer!')
+        if ctx.author.id == ctx.guild.owner_id:
+            def check(message):
+                return message.author.id == ctx.author.id
+            await self.client.send(ctx, "**Du hast 60 Sekunden jede Frage zu beantworten!**")
+            new = askIfNew(self, ctx, check)
+            category = askForCategory(self, ctx, check, new)
+            channel = askForChannel(self, ctx, check, new)
+            if new:
+                try:
+                    category = await ctx.guild.create_category_channel(category)
+                    channel = await ctx.guild.create_voice_channel(channel, category=category)
+                    voice = self.client.conn.fetchrow("SELECT * FROM voiceguild WHERE guildID=$1 AND ownerID=$2", ctx.guild.id, ctx.author.id)
+                    if voice is None:
+                        self.client.conn.execute("INSERT INTO voiceguild VALUES ($1, $2, $3, $4)", ctx.guild.id, ctx.author.id, channel.id, category.id)
+                    else:
+                        self.client.conn.execute("UPDATE voiceguild SET ownerID = $1, voiceChannelID = $2, voiceCategoryID = $3 WHERE guildID = $4", ctx.author.id, channel.id, category.id, ctx.guild.id)
+                    await self.client.send(ctx, "**Du bist nun eingerichtet und bereit!**")
+                except:
+                    await self.client.send(ctx, f"Du hast die Namen nicht richtig eingegeben.\nBitte verwende `{ctx.prefix}voice setup` erneut!")
             else:
-                if answer.content == "no":
-                    await self.client.send(ctx, f"**Enter the name of the category you wish to create the channels in:(e.g Voice Channels)**")
-                    try:
-                        category = await self.bot.wait_for('message', check=check, timeout = 60.0)
-                    except asyncio.TimeoutError:
-                        await self.client.send(ctx, 'Took too long to answer!')
+                try:
+                    voice = self.client.conn.fetchrow("SELECT * FROM voiceguild WHERE guildID=$1 AND ownerID=$2", ctx.guild.id, ctx.author.id)
+                    if voice is None:
+                        self.client.conn.execute("INSERT INTO voiceguild VALUES ($1, $2, $3, $4)", ctx.guild.id, ctx.author.id, int(channel), int(category))
                     else:
-                        new_cat = await ctx.guild.create_category_channel(category.content)
-                    await self.client.send(ctx, '**Enter the name of the voice channel: (e.g Join To Create)**')
-                    try:
-                        channel = await self.bot.wait_for('message', check=check, timeout = 60.0)
-                    except asyncio.TimeoutError:
-                        await self.client.send(ctx, 'Took too long to answer!')
-                    else:
-                        try:
-                            channel = await ctx.guild.create_voice_channel(channel.content, category=new_cat)
-                            c.execute("SELECT * FROM voiceguild WHERE guildID = %s AND ownerID=%s", (guildID, id))
-                            voice=c.fetchone()
-                            if voice is None:
-                                c.execute ("INSERT INTO voiceguild VALUES (%s, %s, %s, %s)",(guildID,id,channel.id,new_cat.id))
-                            else:
-                                c.execute ("UPDATE voiceguild SET guildID = %s, ownerID = %s, voiceChannelID = %s, voiceCategoryID = %s WHERE guildID = %s",(guildID,id,channel.id,new_cat.id, guildID))
-                            await self.client.send(ctx, "**You are all setup and ready to go!**")
-                        except:
-                            await self.client.send(ctx, "You didn't enter the names properly.\nUse `.voice setup` again!")
-                else:
-                    await self.client.send(ctx, f"**Enter the id of the category you wish to use:**")
-                    try:
-                        categoryId = await self.bot.wait_for('message', check=check, timeout = 60.0)
-                    except asyncio.TimeoutError:
-                        await self.client.send(ctx, 'Took too long to answer!')
-                    else:
-                        await self.client.send(ctx, f"**Enter the id of the channel you wish to use:**")
-                        try:
-                            channelId = await self.bot.wait_for('message', check=check, timeout = 60.0)
-                        except asyncio.TimeoutError:
-                            await self.client.send(ctx, 'Took too long to answer!')
-                        else:
-                            c.execute("SELECT * FROM voiceguild WHERE guildID = %s AND ownerID=%s", (guildID, id))
-                            voice=c.fetchone()
-                            if voice is None:
-                                c.execute ("INSERT INTO voiceguild VALUES (%s, %s, %s, %s)",(guildID,id,int(channelId.content),int(categoryId.content)))
-                            else:
-                                c.execute ("UPDATE voiceguild SET guildID = %s, ownerID = %s, voiceChannelID = %s, voiceCategoryID = %s WHERE guildID = %s",(guildID,id,int(channelId.content),int(categoryId.content), guildID))
-                            await self.client.send(ctx, "**You are all setup and ready to go!**")
+                        self.client.conn.execute("UPDATE voiceguild SET ownerID = $1, voiceChannelID = $2, voiceCategoryID = $3 WHERE guildID = $4", ctx.author.id, int(channel), int(category), ctx.guild.id)
+                    await self.client.send(ctx, "**Du bist nun eingerichtet und bereit!**")
+                except:
+                    await self.client.send(ctx, f"Du hast die Namen nicht richtig eingegeben.\nBitte verwende `{ctx.prefix}voice setup` erneut!")
         else:
-            await self.client.send(ctx, f"{ctx.author.mention} only the owner of the server can setup the bot!")
-        conn.commit()
-        conn.close()
+            await self.client.send(ctx, f"Nur der Besitzer des Servers kann diese Einstellung vornehmen!")
 
     @setup.error
     async def info_error(self, ctx, error):
-        print(error)
+        self.client.tExcept(error)
     
     @voice.command()
     @commands.has_permissions(administrator=True)
     async def setCategoryId(self, ctx, newCategoryId):
         await self.client.deleteInvoking(ctx.message)
         try:
-            conn = None
-            conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-            c = conn.cursor()
-            c.execute ("UPDATE voiceguild SET voiceCategoryID = %s WHERE guildID = %s",(int(newCategoryId), ctx.guild.id))
-            conn.commit()
-            conn.close()
-            await self.client.send(ctx, "Your category ID has been updated!")
+            await self.client.conn.execute("UPDATE voiceguild SET voiceCategoryID = $1 WHERE guildID = $2", int(newCategoryId), ctx.guild.id)
+            await self.bot.send(ctx, "Die ID der Kategorie wurde geupdated!")
         except Exception as e:
-            await self.client.send(ctx, f"Couldn't update category ID\n`{e}`")
+            await self.bot.send(ctx, f"Die ID der Kategorie konnte nicht geupdated werden!\n`{e}`")
+
+    @setCategoryId.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
     
     @voice.command()
     @commands.has_permissions(administrator=True)
     async def setChannelId(self, ctx, newChannelId):
         await self.client.deleteInvoking(ctx.message)
         try:
-            conn = None
-            conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-            c = conn.cursor()
-            c.execute ("UPDATE voiceguild SET voiceChannelID = %s WHERE guildID = %s",(int(newChannelId), ctx.guild.id))
-            conn.commit()
-            conn.close()
-            await self.client.send(ctx, "Your channel ID has been updated!")
+            await self.client.conn.execute("UPDATE voiceguild SET voiceChannelID = $1 WHERE guildID = $2", int(newChannelId), ctx.guild.id)
+            await self.bot.send(ctx, "Die ID des Channels wurde geupdated!")
         except Exception as e:
-            await self.client.send(ctx, f"Couldn't update channel ID\n`{e}`")
+            await self.bot.send(ctx, f"Die ID des Channels konnte nicht geupdated werden!\n`{e}`")
+
+    @setChannelId.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
 
     @voice.command()
-    async def setlimit(self, ctx, num):
+    async def setGuildChannelLimit(self, ctx, num : int):
         await self.client.deleteInvoking(ctx.message)
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        if ctx.author.id == config['owner_id']:
-            c.execute("SELECT * FROM voiceguildsettings WHERE guildID = %s", (ctx.guild.id,))
-            voice=c.fetchone()
+        if ctx.author.id == ctx.guild.owner_id:
+            voice = await self.client.conn.fetchrow("SELECT * FROM voiceguildsettings WHERE guildID = $1", ctx.guild.id)
             if voice is None:
-                c.execute("INSERT INTO voiceguildsettings VALUES (%s, %s, %s)", (ctx.guild.id,f"{ctx.author.name}'s channel",num))
+                await self.client.conn.execute("INSERT INTO voiceguildsettings VALUES ($1, $2, $3, $4)", ctx.guild.id, f"{ctx.author.name}'s channel", 0, 0)
             else:
-                c.execute("UPDATE voiceguildsettings SET channelLimit = %s WHERE guildID = %s", (num, ctx.guild.id))
-            await self.client.send(ctx, "You have changed the default channel limit for your server!")
+                await self.client.conn.execute("UPDATE voiceguildsettings SET channelLimit = $1 WHERE guildID = $2", num, ctx.guild.id)
+            await self.bot.send(ctx, f"Du hast das Standardlimit für Sprachkanäle des Servers verändert!\nNeu: {num}")
         else:
-            await self.client.send(ctx, f"{ctx.author.mention} only the owner of the server can setup the bot!")
-        conn.commit()
-        conn.close()
+            await self.bot.send(ctx, f"Nur der besitzer des Servers kann diese Einstellung ändern!")
 
-    @voice.command()
+    @setGuildChannelLimit.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
+
+    @voice.command(aliases=["Lock", "sperren", "beschränken", "abschließen"])
     async def lock(self, ctx):
         await self.client.deleteInvoking(ctx.message)
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        id = ctx.author.id
-        c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
-        voice=c.fetchone()
-        if voice is None:
-            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
+        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
+        if channelID is None:
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channelID = voice[0]
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
             channel = self.bot.get_channel(channelID)
-            await channel.set_permissions(role, connect=False,read_messages=True)
-            await self.client.send(ctx, f'{ctx.author.mention} Voice chat locked! 🔒')
-        conn.commit()
-        conn.close()
+            await channel.set_permissions(role, connect=False, read_messages=True)
+            await self.bot.send(ctx, f'Gesperrt! 🔒')
 
-    @voice.command()
+    @lock.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
+
+    @voice.command(aliases=["Unlock", "öffnen", "aufschließen"])
     async def unlock(self, ctx):
         await self.client.deleteInvoking(ctx.message)
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        id = ctx.author.id
-        c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
-        voice=c.fetchone()
-        if voice is None:
-            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
+        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
+        if channelID is None:
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channelID = voice[0]
             role = discord.utils.get(ctx.guild.roles, name='@everyone')
             channel = self.bot.get_channel(channelID)
-            await channel.set_permissions(role, connect=True,read_messages=True)
-            await self.client.send(ctx, f'{ctx.author.mention} Voice chat unlocked! 🔓')
-        conn.commit()
-        conn.close()
+            await channel.set_permissions(role, connect=True, read_messages=True)
+            await self.bot.send(ctx, f'Entsperrt! 🔓')
 
-    @voice.command(aliases=["allow"])
+    @unlock.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
+
+    @voice.command(aliases=["Permit", "Allow", "allow", "gewähren", "Whitelist", "whitelist"])
     async def permit(self, ctx, member : discord.Member):
         await self.client.deleteInvoking(ctx.message)
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        id = ctx.author.id
-        c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
-        voice=c.fetchone()
-        if voice is None:
-            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
+        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
+        if channelID is None:
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.set_permissions(member, connect=True)
-            await self.client.send(ctx, f'{ctx.author.mention} You have permited {member.name} to have access to the channel. ✅')
-        conn.commit()
-        conn.close()
+            await self.bot.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel gewährt. ✅')
 
-    @voice.command(aliases=["deny"])
+    @permit.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
+
+    @voice.command(aliases=["Reject", "Deny", "verwähren", "Blacklist", "blacklist"])
     async def reject(self, ctx, member : discord.Member):
         await self.client.deleteInvoking(ctx.message)
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        id = ctx.author.id
-        guildID = ctx.guild.id
-        c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
-        voice=c.fetchone()
-        if voice is None:
-            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
+        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", id)
+        if channelID is None:
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             for members in channel.members:
                 if members.id == member.id:
-                    c.execute("SELECT voiceChannelID FROM voiceguild WHERE guildID = %s", (guildID,))
-                    voice=c.fetchone()
-                    channel2 = self.bot.get_channel(voice[0])
-                    await member.move_to(channel2)
+                    channelID = await self.client.conn.fetchval("SELECT voiceChannelID FROM voiceguild WHERE guildID = $1", ctx.guild.id)
+                    createChannel = self.bot.get_channel(channelID)
+                    await member.move_to(createChannel)
             await channel.set_permissions(member, connect=False,read_messages=True)
-            await self.client.send(ctx, f'{ctx.author.mention} You have rejected {member.name} from accessing the channel. ❌')
-        conn.commit()
-        conn.close()
+            await self.bot.send(ctx, f'Du hast {member.name} Zugriff auf deinen Channel verwährt. ❌')
 
+    @reject.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
 
-
-    @voice.command()
+    @voice.command(aliases=["Limit", "Anzahl", "anzahl", "Max", "max", "Begrenzung", "begrenzung"])
     async def limit(self, ctx, limit):
         await self.client.deleteInvoking(ctx.message)
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        id = ctx.author.id
-        c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
-        voice=c.fetchone()
-        if voice is None:
-            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
+        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
+        if channelID is None:
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(user_limit = limit)
-            await self.client.send(ctx, f'{ctx.author.mention} You have set the channel limit to be '+ '{}!'.format(limit))
-            c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
-            voice=c.fetchone()
+            await self.bot.send(ctx, f'Du hast das Limit auf {limit} Benutzer gestellt!')
+            voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", ctx.author.id)
             if voice is None:
-                c.execute("INSERT INTO voiceusersettings VALUES (%s, %s, %s)", (id,f'{ctx.author.name}',limit))
+                await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, f'{ctx.author.name}', limit)
             else:
-                c.execute("UPDATE voiceusersettings SET channelLimit = %s WHERE userID = %s", (limit, id))
-        conn.commit()
-        conn.close()
+                await self.client.conn.execute("UPDATE voiceusersettings SET channelLimit = $1 WHERE userID = $2", limit, ctx.author.id)
 
+    @limit.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
 
     @voice.command()
     async def name(self, ctx,*, name):
         await self.client.deleteInvoking(ctx.message)
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
-        id = ctx.author.id
-        c.execute("SELECT voiceID FROM voicechannel WHERE userID = %s", (id,))
-        voice=c.fetchone()
-        if voice is None:
-            await self.client.send(ctx, f"{ctx.author.mention} You don't own a channel.")
+        if name == "":
+            name = f"{ctx.author.name}'s Tisch"
+        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = %s", ctx.author.id)
+        if channelID is None:
+            await self.bot.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channelID = voice[0]
             channel = self.bot.get_channel(channelID)
             await channel.edit(name = name)
-            await self.client.send(ctx, f'{ctx.author.mention} You have changed the channel name to '+ '{}!'.format(name))
-            c.execute("SELECT channelName FROM voiceusersettings WHERE userID = %s", (id,))
-            voice=c.fetchone()
+            await self.bot.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
+            voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", id)
             if voice is None:
-                c.execute("INSERT INTO voiceusersettings VALUES (%s, %s, %s)", (id,name,0))
+                await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, name, 0)
             else:
-                c.execute("UPDATE voiceusersettings SET channelName = %s WHERE userID = %s", (name, id))
-        conn.commit()
-        conn.close()
+                await self.client.conn.execute("UPDATE voiceusersettings SET channelName = $1 WHERE userID = $2", name, ctx.author.id)
+
+    @name.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
 
     @voice.command()
     async def claim(self, ctx):
         await self.client.deleteInvoking(ctx.message)
-        x = False
-        conn = None
-        conn = psycopg2.connect(host=config["db-addr"], user="postgres", password=config["db-pass"])
-        c = conn.cursor()
         channel = ctx.author.voice.channel
         if channel == None:
-            await self.client.send(ctx, f"{ctx.author.mention} you're not in a voice channel.")
+            await self.bot.send(ctx, f"Du befindest dich in keinen Channel.")
         else:
-            id = ctx.author.id
-            c.execute("SELECT userID FROM voicechannel WHERE voiceID = %s", (channel.id,))
-            voice=c.fetchone()
-            if voice is None:
-                await self.client.send(ctx, f"{ctx.author.mention} You can't own that channel!")
+            userID = await self.client.conn.fetchval("SELECT userID FROM voicechannel WHERE voiceID = $1", channel.id)
+            if userID is None:
+                await self.bot.send(ctx, f"Du kannst diesen Channel nicht besitzen!")
             else:
-                for data in channel.members:
-                    if data.id == voice[0]:
-                        owner = ctx.guild.get_member(voice [0])
-                        await self.client.send(ctx, f"{ctx.author.mention} This channel is already owned by {owner.mention}!")
-                        x = True
-                if x == False:
-                    await self.client.send(ctx, f"{ctx.author.mention} You are now the owner of the channel!")
-                    c.execute("UPDATE voicechannel SET userID = %s WHERE voiceID = %s", (id, channel.id))
-            conn.commit()
-            conn.close()
+                for member in channel.members:
+                    if member.id == userID:
+                        owner = ctx.guild.get_member(userID)
+                        await self.bot.send(ctx, f"Dieser Channel ist bereits im Besitz von {owner.mention}!")
+                        return
+                await self.client.conn.execute("UPDATE voicechannel SET userID = $1 WHERE voiceID = $2", ctx.author.id, channel.id)
+                await self.bot.send(ctx, f"Du bist nun der Besitzer dieses Channels!")
+                settings = await self.client.conn.fetchrow("SELECT channelName, channelLimit FROM voiceusersettings WHERE userID = $1", ctx.author.id)
+                if not settings is None:
+                    await channel.edit(name=settings["channelName"], user_limit=settings["channelLimit"])
+
+    @claim.error
+    async def info_error(self, ctx, error):
+        self.client.tExcept(error)
 
 def setup(bot):
     bot.add_cog(Voice(bot))
