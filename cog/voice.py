@@ -255,8 +255,8 @@ class Voice(commands.Cog):
     async def name(self, ctx,*, name):
         await self.client.deleteInvoking(ctx.message)
         if name == "":
-            name = f"{ctx.author.name}'s Tisch"
-        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = %s", ctx.author.id)
+            name = f"{ctx.author.name}'s Channel"
+        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
