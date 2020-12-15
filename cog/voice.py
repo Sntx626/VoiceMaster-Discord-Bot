@@ -268,9 +268,9 @@ class Voice(commands.Cog):
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
             channel = None
-            for channel in channelID:
-                if int(channel) == ctx.author.voice.channel.id:
-                    channel = ctx.guild.get_member(int(channel))
+            for c in channelID:
+                if int(c) == ctx.author.voice.channel.id:
+                    channel = ctx.guild.get_member(int(c))
             if channel is None:
                 await self.client.send(ctx, f"Du befindest dich in keinen Channel, den du besitzt.")
             else:
