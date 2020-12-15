@@ -262,18 +262,26 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         if name == "":
             name = f"{ctx.author.name}'s Channel"
-        channelID = await self.client.conn.fetchval("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
+        
+        channelID = await self.client.conn.fetch("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
         if channelID is None:
             await self.client.send(ctx, f"Du besitzt keinen Channel.")
         else:
-            channel = self.client.get_channel(int(channelID))
-            await channel.edit(name = name)
-            await self.client.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
-            voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", ctx.author.id)
-            if voice is None:
-                await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, name, 0)
+            channel = None
+            for c in channelID:
+                for member in self.client.get_channel(int(c)).members:
+                    if member.id == ctx.author.id:
+                        channel = self.client.get_channel(int(c))
+            if channel is None:
+                await self.client.send(ctx, f"Du befindest dich in keinen Channel, den du besitzt.")
             else:
-                await self.client.conn.execute("UPDATE voiceusersettings SET channelName = $1 WHERE userID = $2", name, ctx.author.id)
+                await channel.edit(name = name)
+                await self.client.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
+                voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", ctx.author.id)
+                if voice is None:
+                    await self.client.conn.execute("INSERT INTO voiceusersettings VALUES ($1, $2, $3)", ctx.author.id, name, 0)
+                else:
+                    await self.client.conn.execute("UPDATE voiceusersettings SET channelName = $1 WHERE userID = $2", name, ctx.author.id)
 
     @name.error
     async def info_error(self, ctx, error):
