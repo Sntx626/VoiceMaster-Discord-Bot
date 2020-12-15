@@ -262,20 +262,14 @@ class Voice(commands.Cog):
         await self.client.deleteInvoking(ctx.message)
         if name == "":
             name = f"{ctx.author.name}'s Channel"
-        
-        channelID = await self.client.conn.fetch("SELECT voiceID FROM voicechannel WHERE userID = $1", ctx.author.id)
-        if channelID is None:
-            await self.client.send(ctx, f"Du besitzt keinen Channel.")
+        userID = await self.client.conn.fetchval("SELECT userid FROM voicechannel WHERE voiceid = $1", ctx.author.voice.channel.id)
+        if userID is None:
+            await self.client.send(ctx, f"Du befindest dich in keinen Channel")
         else:
-            channel = None
-            await self.client.send(ctx, f"{channelID}")
-            for channelValue in channelID:
-                if int(channelValue["voiceid"]) == ctx.author.voice.channel.id:
-                    channel = ctx.guild.get_member(int(channelValue["voiceid"]))
-            if channel is None:
-                await self.client.send(ctx, f"Du befindest dich in keinen Channel, den du besitzt.")
+            if not userID == ctx.author.id:
+                await self.client.send(ctx, f"Du besitzt Channel nicht.")
             else:
-                await channel.edit(name = name)
+                await ctx.author.voice.channel.edit(name = name)
                 await self.client.send(ctx, f'Du hast den Channelnamen zu `{name}` geändert!')
                 voice = await self.client.conn.fetchval("SELECT channelName FROM voiceusersettings WHERE userID = $1", ctx.author.id)
                 if voice is None:
